@@ -111,7 +111,26 @@
       "bearing": 0
     },
     "mapStyle": {
-      "styleType": "light"
+      "styleType": "carto_positron_no_token",
+      "topLayerGroups": {},
+      "visibleLayerGroups": {
+        "label": true,
+        "road": true,
+        "border": false,
+        "building": true,
+        "water": true,
+        "land": true
+      },
+      "mapStyles": {
+        "carto_positron_no_token": {
+          "accessToken": null,
+          "custom": true,
+          "id": "carto_positron_no_token",
+          "label": "CARTO Positron (free, no token required)",
+          "url": "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
+          "icon": ""
+        }
+      }
     }
   }
 }
