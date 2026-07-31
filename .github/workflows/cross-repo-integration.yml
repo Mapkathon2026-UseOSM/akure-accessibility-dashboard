@@ -1,0 +1,72 @@
+name: Cross-Repo Integration Tests
+
+# Checks out BOTH sibling repositories (this dashboard repo and the
+# companion lga-osm-extractor tool) and verifies they actually work
+# together -- not just that each repo's own isolated unit tests pass.
+#
+# Specifically, this runs tests/test_cross_repo_integration.py, which
+# feeds lga_extractor's real cleaning/export output directly into
+# akure_access's grid/scoring pipeline, catching schema mismatches
+# between the two repos that neither repo's own single-repo CI job
+# could detect on its own.
+#
+# This is separate from the main test.yml workflow so that a
+# lga-osm-extractor-side change (e.g. an output schema change) that
+# breaks compatibility with this dashboard is caught here, without
+# slowing down or complicating the primary single-repo CI job.
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  cross-repo-integration:
+    name: Cross-repo integration (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - name: Check out akure-access-dashboard
+        uses: actions/checkout@v4
+        with:
+          path: akure-access-dashboard
+
+      - name: Check out lga-osm-extractor (sibling repo)
+        uses: actions/checkout@v4
+        with:
+          repository: Mapkathon2026-UseOSM/lga-osm-extractor
+          path: lga-osm-extractor
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: Install lga-osm-extractor
+        working-directory: lga-osm-extractor
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Install akure-access-dashboard
+        working-directory: akure-access-dashboard
+        run: |
+          pip install -r requirements.txt
+          pip install -e .
+          pip install pytest
+
+      - name: Run cross-repo integration tests
+        working-directory: akure-access-dashboard
+        run: pytest tests/test_cross_repo_integration.py -v
+
+      - name: Run each repo's own offline test suite (sanity check)
+        run: |
+          cd lga-osm-extractor && pytest tests/ -m "not integration" -v
+          cd ../akure-access-dashboard && pytest tests/ -m "not integration" -v

@@ -1,0 +1,67 @@
+{
+  "version": "v1",
+  "config": {
+    "visState": {
+      "filters": [],
+      "layers": [
+        {
+          "id": "access_deficit_layer",
+          "type": "geojson",
+          "config": {
+            "dataId": "akure_access",
+            "label": "Access Deficit Score",
+            "color": [255, 153, 31],
+            "columns": {
+              "geojson": "geometry"
+            },
+            "isVisible": true,
+            "visConfig": {
+              "opacity": 0.75,
+              "strokeOpacity": 0.6,
+              "thickness": 0.5,
+              "colorRange": {
+                "name": "Access Deficit (Ordinal)",
+                "type": "qualitative",
+                "category": "Custom",
+                "colors": ["#2ECC71", "#F1C40F", "#C0392B"]
+              },
+              "radius": 10,
+              "filled": true,
+              "stroked": true
+            },
+            "colorField": {
+              "name": "access_deficit_score",
+              "type": "integer"
+            },
+            "colorScale": "ordinal",
+            "colorDomain": [0, 1, 2]
+          }
+        }
+      ],
+      "interactionConfig": {
+        "tooltip": {
+          "fieldsToShow": {
+            "akure_access": [
+              { "name": "lga" },
+              { "name": "cell_id" },
+              { "name": "health_time_min" },
+              { "name": "education_time_min" },
+              { "name": "access_deficit_score" }
+            ]
+          },
+          "enabled": true
+        }
+      }
+    },
+    "mapState": {
+      "latitude": 7.28,
+      "longitude": 5.21,
+      "zoom": 10.5,
+      "pitch": 0,
+      "bearing": 0
+    },
+    "mapStyle": {
+      "styleType": "light"
+    }
+  }
+}

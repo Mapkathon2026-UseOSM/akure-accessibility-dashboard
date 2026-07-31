@@ -1,0 +1,117 @@
+{
+  "version": "v1",
+  "config": {
+    "visState": {
+      "filters": [],
+      "layers": [
+        {
+          "id": "walk_deficit_layer",
+          "type": "geojson",
+          "config": {
+            "dataId": "akure_north_modes",
+            "label": "Walk Access Deficit",
+            "columns": { "geojson": "geometry" },
+            "isVisible": true,
+            "visConfig": {
+              "opacity": 0.7,
+              "strokeOpacity": 0.5,
+              "colorRange": {
+                "name": "Access Deficit (Ordinal)",
+                "type": "qualitative",
+                "category": "Custom",
+                "colors": ["#2ECC71", "#F1C40F", "#C0392B"]
+              },
+              "filled": true,
+              "stroked": true
+            },
+            "colorField": {
+              "name": "walk_access_deficit_score",
+              "type": "integer"
+            },
+            "colorScale": "ordinal",
+            "colorDomain": [0, 1, 2]
+          }
+        },
+        {
+          "id": "okada_deficit_layer",
+          "type": "geojson",
+          "config": {
+            "dataId": "akure_north_modes",
+            "label": "Okada Access Deficit",
+            "columns": { "geojson": "geometry" },
+            "isVisible": false,
+            "visConfig": {
+              "opacity": 0.7,
+              "strokeOpacity": 0.5,
+              "colorRange": {
+                "name": "Access Deficit (Ordinal)",
+                "type": "qualitative",
+                "category": "Custom",
+                "colors": ["#2ECC71", "#F1C40F", "#C0392B"]
+              },
+              "filled": true,
+              "stroked": true
+            },
+            "colorField": {
+              "name": "okada_access_deficit_score",
+              "type": "integer"
+            },
+            "colorScale": "ordinal",
+            "colorDomain": [0, 1, 2]
+          }
+        },
+        {
+          "id": "drive_deficit_layer",
+          "type": "geojson",
+          "config": {
+            "dataId": "akure_north_modes",
+            "label": "Drive Access Deficit",
+            "columns": { "geojson": "geometry" },
+            "isVisible": false,
+            "visConfig": {
+              "opacity": 0.7,
+              "strokeOpacity": 0.5,
+              "colorRange": {
+                "name": "Access Deficit (Ordinal)",
+                "type": "qualitative",
+                "category": "Custom",
+                "colors": ["#2ECC71", "#F1C40F", "#C0392B"]
+              },
+              "filled": true,
+              "stroked": true
+            },
+            "colorField": {
+              "name": "drive_access_deficit_score",
+              "type": "integer"
+            },
+            "colorScale": "ordinal",
+            "colorDomain": [0, 1, 2]
+          }
+        }
+      ],
+      "interactionConfig": {
+        "tooltip": {
+          "fieldsToShow": {
+            "akure_north_modes": [
+              { "name": "cell_id" },
+              { "name": "health_time_min_walk" },
+              { "name": "health_time_min_okada" },
+              { "name": "health_time_min_drive" }
+            ]
+          },
+          "enabled": true
+        }
+      }
+    },
+    "mapState": {
+      "latitude": 7.32,
+      "longitude": 5.22,
+      "zoom": 11,
+      "pitch": 0,
+      "bearing": 0
+    },
+    "mapStyle": {
+      "styleType": "light"
+    }
+  }
+}

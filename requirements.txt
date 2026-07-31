@@ -1,0 +1,16 @@
+osmnx>=1.9
+networkx>=3.2
+geopandas>=0.14
+shapely>=2.0
+fiona>=1.9
+pandas>=2.0
+numpy>=1.26
+scipy>=1.11
+streamlit>=1.32
+leafmap>=0.31
+keplergl>=0.3.2
+jupyter>=1.0
+pytest>=8.0
+
+# Companion extractor tool (install locally in editable mode):
+# pip install -e ../lga-osm-extractor

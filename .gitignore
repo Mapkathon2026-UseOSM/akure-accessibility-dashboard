@@ -1,0 +1,24 @@
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Exclude raw/intermediate per-LGA outputs (large, regenerable by
+# re-running notebooks 01-03) -- but explicitly keep the final scored
+# grids AND the precomputed isochrone catchments, since dashboard/app.py
+# reads both directly and Streamlit Community Cloud deploys straight
+# from this repo (it can't reach your Google Drive), so these files
+# MUST be committed for deployment to work.
+data/processed/*/*.geojson
+!data/processed/*/grid_access_scored.geojson
+!data/processed/*/isochrones_health_walk.geojson
+
+data/processed/*/shapefiles/
+data/processed/*/run_log.json
+!data/processed/.gitkeep
+
+.streamlit/
+*.egg-info/
+.env
+.venv/
+venv/
+.DS_Store

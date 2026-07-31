@@ -1,0 +1,72 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "akure-access-dashboard"
+version = "0.1.0"
+description = "OSM-driven health and education accessibility analysis for Akure North and Akure South LGAs, Ondo State, Nigeria -- built for Map<>kathon 2026 (OSM Dashboard or Analysis track)."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Marvellous (Adeleke Marvellous Ayomide)" }
+]
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: GIS",
+    "Intended Audience :: Science/Research",
+]
+keywords = ["openstreetmap", "osm", "gis", "nigeria", "accessibility", "healthcare", "education", "osmnx"]
+
+dependencies = [
+    "osmnx>=1.9",
+    "networkx>=3.2",
+    "geopandas>=0.14",
+    "shapely>=2.0",
+    "fiona>=1.9",
+    "pandas>=2.0",
+    "numpy>=1.26",
+    "scipy>=1.11",
+]
+
+[project.optional-dependencies]
+viz = [
+    "keplergl>=0.3.2",
+]
+app = [
+    "streamlit>=1.32",
+    "leafmap>=0.31",
+]
+notebooks = [
+    "jupyter>=1.0",
+]
+dev = [
+    "pytest>=8.0",
+]
+all = [
+    "keplergl>=0.3.2",
+    "streamlit>=1.32",
+    "leafmap>=0.31",
+    "jupyter>=1.0",
+    "pytest>=8.0",
+]
+
+[project.urls]
+Repository = "https://github.com/Mapkathon2026-UseOSM/akure-access-dashboard"
+"Companion tool" = "https://github.com/Mapkathon2026-UseOSM/lga-osm-extractor"
+"Map<>kathon 2026" = "https://www.useosm.org/"
+
+# Note: dashboard/app.py lives outside the `akure_access` package and is run
+# directly via `streamlit run dashboard/app.py`, not as an installed
+# console-script entry point.
+
+[tool.setuptools]
+packages = ["akure_access", "akure_access.accessibility", "akure_access.completeness"]
+
+# Note: pytest configuration lives in pytest.ini (not here), since pytest
+# prioritizes pytest.ini over pyproject.toml when both are present in the
+# same directory -- keeping it in one place avoids the two silently
+# drifting out of sync.
