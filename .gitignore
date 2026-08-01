@@ -3,7 +3,7 @@ __pycache__/
 .ipynb_checkpoints/
 
 # Exclude raw/intermediate per-LGA outputs (large, regenerable by
-# re-running notebooks 01-03) -- but explicitly keep the final scored
+# re-running notebooks 01-03), but explicitly keep the final scored
 # grids AND the precomputed isochrone catchments, since dashboard/app.py
 # reads both directly and Streamlit Community Cloud deploys straight
 # from this repo (it can't reach your Google Drive), so these files

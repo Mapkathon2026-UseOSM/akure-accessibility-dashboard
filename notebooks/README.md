@@ -8,6 +8,16 @@ as five sequential Jupyter notebooks. Together they take raw OSM data
 scored, exportable accessibility dataset for Akure North and Akure
 South LGAs.
 
+## Why notebooks, not scripts?
+
+The analysis benefits from being inspectable step-by-step: intermediate
+outputs (grid geometry, completeness flags, routing graphs) are worth
+looking at directly while developing or auditing the methodology,
+which a plain script would hide. The reusable, tested logic itself
+lives in `akure_access/` (imported by these notebooks); the notebooks
+are the orchestration + narrative layer on top of it, not where the
+core algorithms are implemented.
+
 ## Contents, in execution order
 
 | Notebook | Purpose | Depends on |

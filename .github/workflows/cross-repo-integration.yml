@@ -2,7 +2,7 @@ name: Cross-Repo Integration Tests
 
 # Checks out BOTH sibling repositories (this dashboard repo and the
 # companion lga-osm-extractor tool) and verifies they actually work
-# together -- not just that each repo's own isolated unit tests pass.
+# together, not just that each repo's own isolated unit tests pass.
 #
 # Specifically, this runs tests/test_cross_repo_integration.py, which
 # feeds lga_extractor's real cleaning/export output directly into

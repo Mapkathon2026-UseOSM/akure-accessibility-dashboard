@@ -3,7 +3,7 @@ name: Tests
 # Runs the offline unit test suite (no live OSM/network calls) on every
 # push and pull request, plus a manual trigger option. Covers the grid
 # generation, building-density join, OSM completeness flagging, and
-# multi-modal access-deficit scoring logic -- the core analytical engine
+# multi-modal access-deficit scoring logic, the core analytical engine
 # behind the accessibility dashboard.
 #
 # Live-OSM integration tests (marked `@pytest.mark.integration`) are

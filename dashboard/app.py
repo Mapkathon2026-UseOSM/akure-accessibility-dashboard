@@ -57,6 +57,18 @@ st.markdown(
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
+    /* Global font-size bump. Since Streamlit's own built-in widgets,
+       labels, radio buttons, and dataframes all size themselves in rem
+       (relative to this root value), increasing it here is what makes
+       "everything else" bigger app-wide, not just our own custom CSS
+       classes below. The hero title/subtitle are deliberately set in
+       fixed px further down (not rem), specifically so they DON'T also
+       get multiplied by this root increase, keeping their bump smaller
+       and independent, as requested. */
+    html {
+        font-size: 118%;
+    }
+
     html, body, [class*="css"] {
         font-family: 'IBM Plex Sans', sans-serif;
     }
@@ -81,7 +93,7 @@ st.markdown(
         border: 1px solid rgba(196, 98, 45, 0.25);
     }
     .hero-title {
-        font-size: 2.1rem;
+        font-size: 36px;
         font-weight: 700;
         color: #F2EFE9;
         margin-bottom: 0.35rem;
@@ -94,7 +106,7 @@ st.markdown(
         font-size: 1.6rem;
     }
     .hero-sub {
-        font-size: 1.02rem;
+        font-size: 18px;
         color: #b9b6ad;
         max-width: 62rem;
         line-height: 1.5;
@@ -290,6 +302,17 @@ with col3:
 col4, col5 = st.columns([1, 2])
 with col4:
     basemap_choice = st.selectbox("Basemap", list(BASEMAP_OPTIONS.keys()))
+with col5:
+    colorblind_safe = st.checkbox(
+        "Use colorblind-safe palette",
+        value=False,
+        help=(
+            "Switches the map colors from the default red/yellow/green "
+            "(hard to distinguish under red-green color blindness) to the "
+            "Okabe-Ito palette for the deficit score, and viridis for the "
+            "continuous time-based views."
+        ),
+    )
 
 threshold_note = st.caption(
     "Underserved thresholds differ by mode, since a 30-minute walk covers far less ground "
@@ -310,6 +333,25 @@ show_isochrones = st.checkbox(
 )
 
 
+MODE_LABELS = {"walk": "Walking", "okada": "Okada", "drive": "Driving"}
+
+# Standard (traffic-light) vs colorblind-safe palette for the discrete
+# 0/1/2 access-deficit score. The colorblind-safe option uses the
+# Okabe-Ito palette, specifically designed to remain distinguishable
+# under the common forms of red-green color blindness (deuteranopia,
+# protanopia), which the default traffic-light red/yellow/green is not.
+DEFICIT_COLORS = {
+    "standard": ["#2ECC71", "#F1C40F", "#C0392B"],
+    "colorblind_safe": ["#0072B2", "#E69F00", "#D55E00"],
+}
+DEFICIT_LABELS = ["Well served", "Underserved (1 service)", "Underserved (both services)"]
+
+# Continuous (minutes-to-nearest-facility) legend: a sequential warm
+# ramp by default, or viridis (perceptually uniform, colorblind-safe)
+# as the alternative.
+CONTINUOUS_CMAP = {"standard": "YlOrRd", "colorblind_safe": "viridis"}
+
+
 def score_column(view, mode):
     suffix = f"_{mode}"
     if view == "Health only":
@@ -321,20 +363,39 @@ def score_column(view, mode):
     return col
 
 
-def render_map(gdf, view, mode, isochrones_gdf=None, show_isochrones=False, basemap="CartoDB.Positron"):
+def render_map(gdf, view, mode, isochrones_gdf=None, show_isochrones=False,
+                basemap="CartoDB.Positron", colorblind_safe=False):
     m = leafmap.Map()
     m.add_basemap(basemap)
 
     col = score_column(view, mode)
     settled = gdf[gdf["building_count"] > 0]
+    palette_key = "colorblind_safe" if colorblind_safe else "standard"
+
     if not settled.empty and col in settled.columns:
-        m.add_data(
-            settled,
-            column=col,
-            cmap="RdYlGn_r",
-            legend_title=col,
-            layer_name=f"{view} access ({mode})",
-        )
+        if view == "Combined":
+            # Discrete 0/1/2 score: explicit categorical colors/labels,
+            # rather than a numeric quantile legend that would show raw
+            # score values with no explanation of what they mean.
+            m.add_data(
+                settled,
+                column=col,
+                scheme="UserDefined",
+                classification_kwds={"bins": [0, 1, 2]},
+                colors=DEFICIT_COLORS[palette_key],
+                labels=DEFICIT_LABELS,
+                legend_title=f"Access Deficit ({MODE_LABELS[mode]})",
+                layer_name=f"{view} access ({mode})",
+            )
+        else:
+            service = "Health" if view == "Health only" else "Education"
+            m.add_data(
+                settled,
+                column=col,
+                cmap=CONTINUOUS_CMAP[palette_key],
+                legend_title=f"{service} Access Time, {MODE_LABELS[mode]} (min)",
+                layer_name=f"{view} access ({mode})",
+            )
     elif col not in settled.columns:
         st.info(f"Column '{col}' not found. Re-run notebook 03 with modes including '{mode}'.")
 
@@ -347,8 +408,11 @@ def render_map(gdf, view, mode, isochrones_gdf=None, show_isochrones=False, base
         m.add_data(
             isochrones_wgs84,
             column="trip_time_min",
-            cmap="Blues",
-            legend_title="Walking catchment (min)",
+            scheme="UserDefined",
+            classification_kwds={"bins": [15, 30, 45]},
+            colors=["#B3D9FF", "#5B9BD5", "#1F4E79"] if not colorblind_safe else ["#9AD1D4", "#3D8B95", "#0B4F55"],
+            labels=["Within 15 min", "Within 30 min", "Within 45 min"],
+            legend_title="Health Facility Walking Catchment",
             layer_name="Health facility walking catchments",
         )
     elif show_isochrones and (isochrones_gdf is None or isochrones_gdf.empty):
@@ -361,6 +425,11 @@ def render_map(gdf, view, mode, isochrones_gdf=None, show_isochrones=False, base
 
 
 section_divider("Access map")
+st.caption(
+    "Combined view colors cells by deficit score (green = well served, "
+    "amber/red = underserved). Health/Education-only views show a continuous "
+    "gradient of travel time in minutes. Legend appears bottom-right of the map."
+)
 if lga_choice == "Both (compare)":
     tab1, tab2 = st.tabs(available_lgas)
     with tab1:
@@ -369,6 +438,7 @@ if lga_choice == "Both (compare)":
             isochrones_gdf=isochrone_data.get(available_lgas[0]),
             show_isochrones=show_isochrones,
             basemap=BASEMAP_OPTIONS[basemap_choice],
+            colorblind_safe=colorblind_safe,
         )
     with tab2:
         render_map(
@@ -376,6 +446,7 @@ if lga_choice == "Both (compare)":
             isochrones_gdf=isochrone_data.get(available_lgas[1]),
             show_isochrones=show_isochrones,
             basemap=BASEMAP_OPTIONS[basemap_choice],
+            colorblind_safe=colorblind_safe,
         )
 else:
     render_map(
@@ -383,6 +454,7 @@ else:
         isochrones_gdf=isochrone_data.get(lga_choice),
         show_isochrones=show_isochrones,
         basemap=BASEMAP_OPTIONS[basemap_choice],
+        colorblind_safe=colorblind_safe,
     )
 
 section_divider("Most underserved settlements")
@@ -400,7 +472,23 @@ if deficit_col in combined.columns:
             deficit_col,
         ] if c in ranked.columns
     ]
-    st.dataframe(ranked[display_cols].head(15), use_container_width=True)
+    # Human-readable column headers and rounded figures, rather than raw
+    # column names (e.g. "health_time_min_walk") and five-decimal floats.
+    friendly_names = {
+        "lga": "LGA",
+        "cell_id": "Cell ID",
+        f"health_time_min_{mode_choice}": "Health time (min)",
+        f"health_distance_km_{mode_choice}": "Health distance (km)",
+        f"education_time_min_{mode_choice}": "Education time (min)",
+        f"education_distance_km_{mode_choice}": "Education distance (km)",
+        deficit_col: "Deficit score (0-2)",
+    }
+    display_df = ranked[display_cols].head(15).round(1).rename(columns=friendly_names)
+    st.dataframe(display_df, use_container_width=True)
+    st.caption(
+        "Deficit score: **0** = well served, **1** = underserved for one service "
+        "(health or education), **2** = underserved for both."
+    )
 else:
     st.info(f"No scored data found for mode '{mode_choice}' yet. Re-run notebook 03 with this mode included.")
 
