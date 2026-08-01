@@ -34,6 +34,18 @@ def nearest_graph_node(G: nx.MultiDiGraph, point: Point):
     A KD-tree over explicit 'x'/'y' node attributes works uniformly
     against both graph construction paths.
     """
+    # Defensive backstop: a Polygon/MultiPolygon facility geometry
+    # (e.g. a hospital mapped as a building outline rather than a
+    # node) has no .x/.y and would otherwise raise here, this used to
+    # fail silently further up the call chain in
+    # batch_nearest_facility_distances()'s bare except, dropping the
+    # facility from routing entirely with no visible error (see
+    # clean.py's POINT_LAYERS collapse, which is the primary fix,
+    # this is a second line of defense for anything that reaches this
+    # function without having gone through that cleaning step).
+    if not isinstance(point, Point):
+        point = point.centroid
+
     cache_key = "_kdtree"
     ids_key = "_kdtree_node_ids"
 
@@ -344,11 +356,34 @@ def batch_nearest_facility_distances(
         return {}
 
     facility_nodes = set()
+    skipped = 0
     for _, row in facilities_gdf.iterrows():
         try:
             facility_nodes.add(nearest_graph_node(G, row.geometry))
         except Exception:
+            skipped += 1
             continue
+
+    # Surface this loudly rather than letting it fail silently: if
+    # every facility in a non-empty facilities_gdf fails to snap, the
+    # caller ends up with every grid cell scored as unreachable
+    # (inf) for this service, with no visible sign anything went
+    # wrong. This is exactly what happened when a whole LGA's health
+    # facilities were mapped as building-outline polygons upstream, a
+    # bare `except: continue` here silently produced 0% health
+    # access for an entire LGA. A partial skip (some facilities
+    # genuinely un-snappable, e.g. disconnected from the graph) is
+    # expected occasionally and only warns; a total skip is almost
+    # always a real bug and should be investigated immediately.
+    if skipped:
+        import warnings
+        warnings.warn(
+            f"{skipped}/{len(facilities_gdf)} facilities in this layer could not "
+            f"be matched to the routing graph and were excluded from nearest-"
+            f"facility distances. If this is all or most of the layer, check "
+            f"geometry type (should be Point after cleaning) and CRS before "
+            f"trusting the resulting scores."
+        )
 
     if not facility_nodes:
         return {}
