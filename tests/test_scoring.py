@@ -143,7 +143,7 @@ def test_sanitize_for_export_does_not_break_deficit_scoring():
     ordering by checking that a genuinely unreachable, settled cell is
     still correctly scored as underserved (not silently "adequately
     served") even once the resulting grid has been through export
-    sanitization -- i.e. the scoring decision, once made, survives the
+    sanitization, i.e. the scoring decision, once made, survives the
     inf -> NaN conversion; only the raw time/distance values change.
     """
     boundary = _synthetic_boundary(1000)
@@ -170,7 +170,7 @@ def test_sanitize_for_export_called_before_scoring_gives_wrong_result():
     to NaN first, which add_access_deficit_score() then treats as
     "unknown" (fillna(0) = adequately served) instead of correctly
     detecting it as unreachable. This is the exact regression caught
-    during development -- kept here as a permanent guard against
+    during development, kept here as a permanent guard against
     reintroducing it.
     """
     boundary = _synthetic_boundary(1000)

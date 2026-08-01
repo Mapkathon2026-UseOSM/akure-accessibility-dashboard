@@ -3,8 +3,8 @@
 ## Purpose
 
 Automated tests for the `akure_access` package. These are unit and
-integration tests against synthetic data -- fast, deterministic, and
-runnable without network access or real OSM data -- distinct from
+integration tests against synthetic data, fast, deterministic, and
+runnable without network access or real OSM data, distinct from
 running the actual notebooks against real Akure North/South data.
 
 ## Contents
@@ -14,7 +14,7 @@ running the actual notebooks against real Akure North/South data.
 | `test_scoring.py` | Grid generation, building density, access-deficit scoring, export sanitization |
 | `test_completeness.py` | OSM completeness flagging, including the spatial-index rewrite's equivalence with the original linear-scan approach |
 | `test_network_graph.py` | Road network construction, nearest-facility routing (both the naive per-pair approach and the faster multi-source Dijkstra batch approach, and a test proving they agree) |
-| `test_cross_repo_integration.py` | Verifies `lga_extractor`'s real output schema is exactly what this package's functions expect -- catches breakage between the two repos that neither repo's own isolated tests could detect |
+| `test_cross_repo_integration.py` | Verifies `lga_extractor`'s real output schema is exactly what this package's functions expect, catches breakage between the two repos that neither repo's own isolated tests could detect |
 
 ## Running
 
@@ -25,7 +25,7 @@ pytest -m "not integration"
 # Everything, including tests that hit live OSM/Overpass (slow, needs network)
 pytest -m integration
 
-# Cross-repo test specifically (needs lga_extractor installed -- see below)
+# Cross-repo test specifically (needs lga_extractor installed, see below)
 pytest tests/test_cross_repo_integration.py
 ```
 

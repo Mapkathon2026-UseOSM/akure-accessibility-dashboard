@@ -3,6 +3,11 @@
 [![Tests](https://github.com/Mapkathon2026-UseOSM/akure-access-dashboard/actions/workflows/test.yml/badge.svg)](https://github.com/Mapkathon2026-UseOSM/akure-access-dashboard/actions/workflows/test.yml)
 [![Cross-Repo Integration](https://github.com/Mapkathon2026-UseOSM/akure-access-dashboard/actions/workflows/cross-repo-integration.yml/badge.svg)](https://github.com/Mapkathon2026-UseOSM/akure-access-dashboard/actions/workflows/cross-repo-integration.yml)
 
+## Live links
+
+- **Interactive dashboard:** https://akure-accessibility-dashboard-analysis.streamlit.app/
+- **ArcGIS StoryMap:** _link pending, see `docs/storymap_link.md`_
+
 An OSM-driven accessibility analysis for Akure North and Akure South LGAs
 (Ondo State, Nigeria), built for **Map<>kathon 2026** (OSM Dashboard or
 Analysis track). This repository consumes OSM data extracted by the
@@ -12,8 +17,7 @@ OSM completeness check, an interactive dashboard, and a narrative StoryMap.
 
 > **How this serves the public good:** this project uses OSM's own road
 > and facility data to identify which communities in Akure North and
-> Akure South lack practical access to healthcare and education —
-> across walking, okada, and driving — and, critically, distinguishes
+> Akure South lack practical access to healthcare and education, > across walking, okada, and driving, and, critically, distinguishes
 > genuine service gaps from places where OSM itself simply hasn't
 > caught up yet. That distinction matters: treating an OSM data gap as
 > a confirmed service gap could misdirect real planning attention, so
@@ -24,10 +28,10 @@ OSM completeness check, an interactive dashboard, and a narrative StoryMap.
 
 1. **Extracts** OSM roads, buildings, health facilities, and schools for
    Akure North and Akure South (via `lga_extractor`).
-2. **Flags OSM completeness gaps** — settled areas with no nearby OSM
+2. **Flags OSM completeness gaps**, settled areas with no nearby OSM
    health/education facility tags, distinguishing likely data gaps from
    confirmed service gaps.
-3. **Models accessibility** — network-based walking travel time from every
+3. **Models accessibility**, network-based walking travel time from every
    settled grid cell to its nearest clinic and nearest school.
 4. **Scores underserved areas** using a composite access-deficit index
    (0–2), ranking the most vulnerable settlements in each LGA, across
@@ -43,9 +47,9 @@ OSM completeness check, an interactive dashboard, and a narrative StoryMap.
 akure-access-dashboard/
 ├── README.md
 ├── LICENSE
-├── pyproject.toml             # packaging config -- enables `pip install -e .`
+├── pyproject.toml             # packaging config, enables `pip install -e .`
 ├── requirements.txt
-├── requirements-lock.txt      # exact pip-resolved versions -- see "Reproducible installs" below
+├── requirements-lock.txt      # exact pip-resolved versions, see "Reproducible installs" below
 ├── environment.yml
 ├── pytest.ini
 │
@@ -111,7 +115,7 @@ notebooks/02_completeness_assessment.ipynb → adds grid + OSM completeness flag
         ▼
 notebooks/03_accessibility_analysis.ipynb  → adds per-mode travel times + deficit scores
         │                                    (also precomputes health-facility walking
-        │                                     catchments -- isochrones_health_walk.geojson)
+        │                                     catchments, isochrones_health_walk.geojson)
         ▼
 notebooks/04_results_summary.ipynb         → reports/*.csv (comparison tables)
         ▼
@@ -125,12 +129,12 @@ notebooks/05_kepler_visualization.ipynb    → visuals/*.html (standalone intera
 
 **Where the actual logic lives, versus where it's orchestrated:**
 The reusable, tested analysis functions (grid generation, routing,
-scoring, completeness checks) live in `akure_access/` -- see
+scoring, completeness checks) live in `akure_access/`, see
 `akure_access/README.md` for that package's internal architecture. The
 notebooks in `notebooks/` call these functions in sequence against
 real Akure North/South data; `dashboard/app.py` presents the final
 scored output interactively. Neither the notebooks nor the dashboard
-contain core analysis logic themselves -- they're orchestration and
+contain core analysis logic themselves, they're orchestration and
 presentation layers on top of the tested package.
 
 ## Setup
@@ -160,9 +164,9 @@ pip install -e ".[all]"        # everything above
 pytest tests/ -m "not integration" -v
 ```
 
-Runs the offline unit test suite — grid generation, building-density
+Runs the offline unit test suite, grid generation, building-density
 joins, OSM completeness flagging, and multi-modal (walk/okada/drive)
-access-deficit scoring — without requiring network access. The same
+access-deficit scoring, without requiring network access. The same
 command runs automatically on every push via GitHub Actions; see the
 badge at the top of this README.
 
@@ -178,7 +182,7 @@ streamlit run dashboard/app.py
 Optionally, run `05_kepler_visualization.ipynb` to generate polished,
 standalone kepler.gl map exports (`visuals/*.html`) for embedding in the
 ArcGIS StoryMap or README. **Kepler.gl is used purely for static/visual
-storytelling** — it is a separate, non-interactive supplementary output;
+storytelling**, it is a separate, non-interactive supplementary output;
 the Streamlit dashboard remains the primary interactive analysis tool
 for the submission.
 
@@ -192,7 +196,7 @@ for the submission.
   facility are flagged as underserved for that service.
 - **Completeness check:** cells with visible building density but no OSM
   facility tag within 1 km are flagged as possible OSM data gaps, not
-  confirmed service gaps — this caveat is carried through to the
+  confirmed service gaps, this caveat is carried through to the
   dashboard and StoryMap narrative.
 
 Full methodology detail: see `docs/methodology.md` and the standalone
@@ -200,7 +204,7 @@ project methodology document produced alongside this repository.
 
 ## Part of
 
-**Map<>kathon 2026** — in partnership with Unpatterned and the
+**Map<>kathon 2026**, in partnership with Unpatterned and the
 OpenStreetMap Engineering Working Group. https://www.useosm.org/
 
 ## Documentation overhaul (Phase 1)
@@ -215,8 +219,7 @@ repo received:
   extractor → notebooks → dashboard/StoryMap data flow
 - Existing module/function docstrings (added across earlier sessions:
   OSMnx 2.x compatibility fix, multi-source Dijkstra refactor, spatial-
-  index completeness rewrite) were audited and confirmed complete --
-  no file was found missing a module-level docstring except the empty
+  index completeness rewrite) were audited and confirmed complete, no file was found missing a module-level docstring except the empty
   `__init__.py` noted above
 
 A full tutorial-style rebuild of `notebooks/01-05` (guided

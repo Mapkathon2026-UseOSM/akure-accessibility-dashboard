@@ -11,9 +11,15 @@ Expects pre-computed outputs from notebooks 01-04, specifically:
 Optionally uses, if present (notebook 03, Section 5.2):
     data/processed/{lga}/isochrones_health_walk.geojson
 This powers the "walking catchments" overlay toggle. It is genuinely
-optional -- the dashboard works normally without it, since not every
+optional, since the dashboard works normally without it, and not every
 deployment will necessarily have re-run notebook 03 since this overlay
 was added.
+
+Visual design: see the CSS block below for the full token system
+(palette, type, the concentric-ring signature motif used as section
+dividers). Grounded in the subject rather than a generic dashboard
+theme: the accent colors reference Akure's laterite-red roads and
+soil, and Southwest Nigeria's adire indigo-dyeing tradition.
 
 Run with (from repo root):
     streamlit run dashboard/app.py
@@ -24,8 +30,165 @@ import pandas as pd
 import streamlit as st
 import leafmap.foliumap as leafmap
 
-st.set_page_config(page_title="Akure Access Dashboard", layout="wide")
+st.set_page_config(page_title="Akure Access Dashboard", page_icon="◎", layout="wide")
 
+# ============================================================
+# Visual design system
+# ------------------------------------------------------------
+# Palette:
+#   #141625  background      (adire indigo-black)
+#   #1c1f33  panel/card       (a step lighter, for contrast)
+#   #C4622D  primary accent   (laterite road/soil red-orange)
+#   #4C9A8C  secondary accent (vegetation teal)
+#   #E8B84B  highlight        (soft gold, for standout figures)
+#   #F2EFE9  body text        (warm off-white)
+# Type:
+#   Space Grotesk  - headings, a technical/civic display face
+#   IBM Plex Sans  - body copy, legible and unshowy
+#   IBM Plex Mono  - data figures, ties to the coordinate/data nature
+#                    of a GIS tool
+# Signature motif:
+#   Concentric rings, echoing the isochrone catchment rings that are
+#   the actual visual/conceptual core of an accessibility study, used
+#   as section dividers and the page icon.
+# ============================================================
+st.markdown(
+    """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'IBM Plex Sans', sans-serif;
+    }
+    .stApp {
+        background-color: #141625;
+        color: #F2EFE9;
+    }
+    h1, h2, h3, .hero-title {
+        font-family: 'Space Grotesk', sans-serif !important;
+        letter-spacing: -0.01em;
+    }
+    code, .stDataFrame, [data-testid="stMetricValue"] {
+        font-family: 'IBM Plex Mono', monospace !important;
+    }
+
+    /* Hero header */
+    .hero-band {
+        padding: 1.75rem 2rem 1.5rem 2rem;
+        margin-bottom: 1.25rem;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #1c1f33 0%, #191c2d 100%);
+        border: 1px solid rgba(196, 98, 45, 0.25);
+    }
+    .hero-title {
+        font-size: 2.1rem;
+        font-weight: 700;
+        color: #F2EFE9;
+        margin-bottom: 0.35rem;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+    .hero-ring {
+        color: #C4622D;
+        font-size: 1.6rem;
+    }
+    .hero-sub {
+        font-size: 1.02rem;
+        color: #b9b6ad;
+        max-width: 62rem;
+        line-height: 1.5;
+    }
+
+    /* Section divider: a thin gradient rule with a ring mark,
+       standing in for st.subheader's default styling */
+    .section-divider {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin: 1.6rem 0 1rem 0;
+    }
+    .section-divider .ring-mark {
+        color: #C4622D;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+    .section-divider .section-title {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #F2EFE9;
+        white-space: nowrap;
+    }
+    .section-divider .rule {
+        flex-grow: 1;
+        height: 1px;
+        background: linear-gradient(90deg, rgba(196,98,45,0.6), rgba(196,98,45,0));
+    }
+
+    /* Metric cards for the findings summary */
+    .metric-card {
+        background: #1c1f33;
+        border: 1px solid rgba(76, 154, 140, 0.25);
+        border-radius: 12px;
+        padding: 1.1rem 1.25rem;
+        height: 100%;
+    }
+    .metric-card .metric-label {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #4C9A8C;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 0.5rem;
+    }
+    .metric-card .metric-figure {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 1.8rem;
+        font-weight: 500;
+        color: #E8B84B;
+        margin-bottom: 0.25rem;
+    }
+    .metric-card .metric-note {
+        font-size: 0.88rem;
+        color: #b9b6ad;
+        line-height: 1.4;
+    }
+    .callout {
+        background: rgba(76, 154, 140, 0.08);
+        border-left: 3px solid #4C9A8C;
+        border-radius: 6px;
+        padding: 0.9rem 1.1rem;
+        font-size: 0.95rem;
+        color: #d9d6cd;
+        line-height: 1.5;
+        margin-top: 0.75rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+def section_divider(title: str):
+    """Renders the concentric-ring section divider in place of st.subheader,
+    keeping the signature motif consistent across all section breaks."""
+    st.markdown(
+        f"""
+        <div class="section-divider">
+            <span class="ring-mark">◎</span>
+            <span class="section-title">{title}</span>
+            <span class="rule"></span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+# ============================================================
+# Data loading
+# ============================================================
 DATA_PATHS = {
     "Akure North": "data/processed/akure_north/grid_access_scored.geojson",
     "Akure South": "data/processed/akure_south/grid_access_scored.geojson",
@@ -33,12 +196,23 @@ DATA_PATHS = {
 
 # Precomputed health-facility walking catchments (see
 # notebooks/03_accessibility_analysis.ipynb, Section 5.2). This is an
-# OPTIONAL overlay -- loaded only if the file exists, so the dashboard
+# optional overlay, loaded only if the file exists, so the dashboard
 # still works normally for an LGA where this notebook hasn't been
 # re-run since this feature was added.
 ISOCHRONE_PATHS = {
     "Akure North": "data/processed/akure_north/isochrones_health_walk.geojson",
     "Akure South": "data/processed/akure_south/isochrones_health_walk.geojson",
+}
+
+# Basemap options exposed in the UI, mapped to the provider names
+# leafmap/xyzservices expects. All three are free, token-free tile
+# sources (folium's Leaflet base, not Mapbox), so this toggle carries
+# none of the credential concerns that applied to the kepler.gl exports
+# in notebook 05.
+BASEMAP_OPTIONS = {
+    "Light (CartoDB Positron)": "CartoDB.Positron",
+    "Streets (OpenStreetMap)": "OpenStreetMap",
+    "Satellite (Esri)": "Esri.WorldImagery",
 }
 
 
@@ -60,8 +234,8 @@ def load_isochrones():
     """
     Loads precomputed health-facility walking catchments per LGA, if
     the file exists. Returns None (not an error) for any LGA where it
-    doesn't -- this is an optional overlay, not a required input, so
-    its absence should never block the rest of the dashboard from
+    doesn't, since this is an optional overlay, not a required input,
+    so its absence should never block the rest of the dashboard from
     working normally.
     """
     frames = {}
@@ -73,12 +247,20 @@ def load_isochrones():
     return frames
 
 
-st.title("Mapping the Gap: Health & Education Accessibility in Akure")
-st.write(
-    "An OSM-driven analysis of physical access to healthcare and education "
-    "facilities across Akure North and Akure South LGAs, Ondo State, with an "
-    "integrated check on where OSM's own data coverage may be shaping the "
-    "picture."
+# ============================================================
+# Hero header
+# ============================================================
+st.markdown(
+    """
+    <div class="hero-band">
+        <div class="hero-title"><span class="hero-ring">◎</span>Mapping the Gap: Health &amp; Education Accessibility in Akure</div>
+        <div class="hero-sub">An OSM-driven analysis of physical access to healthcare and education
+        facilities across Akure North and Akure South LGAs, Ondo State, with an
+        integrated check on where OSM's own data coverage may be shaping the
+        picture.</div>
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
 
 data = load_data()
@@ -105,8 +287,12 @@ with col3:
         format_func=lambda m: {"walk": "Walking", "okada": "Okada (motorcycle)", "drive": "Private/shared vehicle"}[m],
     )
 
+col4, col5 = st.columns([1, 2])
+with col4:
+    basemap_choice = st.selectbox("Basemap", list(BASEMAP_OPTIONS.keys()))
+
 threshold_note = st.caption(
-    "Underserved thresholds differ by mode: a 30-minute walk covers far less ground "
+    "Underserved thresholds differ by mode, since a 30-minute walk covers far less ground "
     "than 30 minutes by okada or car, so each mode uses its own distance/time budget. "
     "Cells with no visible buildings are excluded from scoring."
 )
@@ -117,7 +303,7 @@ show_isochrones = st.checkbox(
     value=False,
     help=(
         "An illustrative overlay showing roughly how far someone can walk from "
-        "each health facility within 15, 30, or 45 minutes — a convex-hull "
+        "each health facility within 15, 30, or 45 minutes: a convex-hull "
         "approximation, not the project's actual access-deficit scoring (which "
         "uses exact network routing; see the methodology notes for detail)."
     ),
@@ -135,8 +321,10 @@ def score_column(view, mode):
     return col
 
 
-def render_map(gdf, view, mode, isochrones_gdf=None, show_isochrones=False):
+def render_map(gdf, view, mode, isochrones_gdf=None, show_isochrones=False, basemap="CartoDB.Positron"):
     m = leafmap.Map()
+    m.add_basemap(basemap)
+
     col = score_column(view, mode)
     settled = gdf[gdf["building_count"] > 0]
     if not settled.empty and col in settled.columns:
@@ -148,12 +336,12 @@ def render_map(gdf, view, mode, isochrones_gdf=None, show_isochrones=False):
             layer_name=f"{view} access ({mode})",
         )
     elif col not in settled.columns:
-        st.info(f"Column '{col}' not found — re-run notebook 03 with modes including '{mode}'.")
+        st.info(f"Column '{col}' not found. Re-run notebook 03 with modes including '{mode}'.")
 
     if show_isochrones and isochrones_gdf is not None and not isochrones_gdf.empty:
         # Reproject to WGS84 for web-map display, matching the same
         # one-way CRS conversion done for the kepler.gl exports in
-        # notebook 05 -- this overlay is for visualization only, no
+        # notebook 05. This overlay is for visualization only; no
         # further analysis happens on it here.
         isochrones_wgs84 = isochrones_gdf.to_crs("EPSG:4326")
         m.add_data(
@@ -165,14 +353,14 @@ def render_map(gdf, view, mode, isochrones_gdf=None, show_isochrones=False):
         )
     elif show_isochrones and (isochrones_gdf is None or isochrones_gdf.empty):
         st.info(
-            "No precomputed walking catchments found for this LGA — "
-            "re-run notebook 03 (Section 5.2) to generate them."
+            "No precomputed walking catchments found for this LGA. "
+            "Re-run notebook 03 (Section 5.2) to generate them."
         )
 
     m.to_streamlit(height=600)
 
 
-st.subheader("Access map")
+section_divider("Access map")
 if lga_choice == "Both (compare)":
     tab1, tab2 = st.tabs(available_lgas)
     with tab1:
@@ -180,21 +368,24 @@ if lga_choice == "Both (compare)":
             data[available_lgas[0]], view_choice, mode_choice,
             isochrones_gdf=isochrone_data.get(available_lgas[0]),
             show_isochrones=show_isochrones,
+            basemap=BASEMAP_OPTIONS[basemap_choice],
         )
     with tab2:
         render_map(
             data[available_lgas[1]], view_choice, mode_choice,
             isochrones_gdf=isochrone_data.get(available_lgas[1]),
             show_isochrones=show_isochrones,
+            basemap=BASEMAP_OPTIONS[basemap_choice],
         )
 else:
     render_map(
         data[lga_choice], view_choice, mode_choice,
         isochrones_gdf=isochrone_data.get(lga_choice),
         show_isochrones=show_isochrones,
+        basemap=BASEMAP_OPTIONS[basemap_choice],
     )
 
-st.subheader("Most underserved settlements")
+section_divider("Most underserved settlements")
 frames_to_rank = (
     [data[l] for l in available_lgas] if lga_choice == "Both (compare)" else [data[lga_choice]]
 )
@@ -211,9 +402,9 @@ if deficit_col in combined.columns:
     ]
     st.dataframe(ranked[display_cols].head(15), use_container_width=True)
 else:
-    st.info(f"No scored data found for mode '{mode_choice}' yet — re-run notebook 03 with this mode included.")
+    st.info(f"No scored data found for mode '{mode_choice}' yet. Re-run notebook 03 with this mode included.")
 
-st.subheader("Findings summary")
+section_divider("Findings summary")
 
 all_settled = pd.concat(
     [data[l][data[l]["building_count"] > 0] for l in available_lgas],
@@ -223,8 +414,6 @@ all_settled = pd.concat(
 if all_settled.empty:
     st.info("No settled grid cells found in the loaded data.")
 else:
-    summary_lines = []
-
     # Cross-mode comparison, computed live from whatever modes are present
     mode_stats = []
     for m in ["walk", "okada", "drive"]:
@@ -235,21 +424,36 @@ else:
             mode_stats.append((m, pct_any, pct_both))
 
     if mode_stats:
-        summary_lines.append("**Underserved rate by transport mode** (across all loaded study areas):")
-        for m, pct_any, pct_both in mode_stats:
-            summary_lines.append(
-                f"- **{m.capitalize()}**: {pct_any:.1f}% underserved for at least one service, "
-                f"{pct_both:.1f}% underserved for both"
-            )
+        mode_labels = {"walk": "Walking", "okada": "Okada", "drive": "Driving"}
+        cards = st.columns(len(mode_stats))
+        for card_col, (m, pct_any, pct_both) in zip(cards, mode_stats):
+            with card_col:
+                st.markdown(
+                    f"""
+                    <div class="metric-card">
+                        <div class="metric-label">{mode_labels[m]}</div>
+                        <div class="metric-figure">{pct_any:.1f}%</div>
+                        <div class="metric-note">underserved for at least one service<br>
+                        {pct_both:.1f}% underserved for both</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
         if len(mode_stats) > 1:
             walk_pct = next((p for m, p, _ in mode_stats if m == "walk"), None)
             fastest_pct = min(p for m, p, _ in mode_stats if m != "walk") if len(mode_stats) > 1 else None
             if walk_pct is not None and fastest_pct is not None:
                 gap = walk_pct - fastest_pct
-                summary_lines.append(
-                    f"\nWalking-only analysis would overstate underserved communities by roughly "
-                    f"**{gap:.0f} percentage points** compared to okada/driving access — a key reason "
-                    f"this project models all three modes rather than walking distance alone."
+                st.markdown(
+                    f"""
+                    <div class="callout">
+                    Walking-only analysis would overstate underserved communities by roughly
+                    <strong>{gap:.0f} percentage points</strong> compared to okada/driving access,
+                    a key reason this project models all three modes rather than walking distance alone.
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
                 )
 
     # Completeness cross-check, computed live
@@ -258,15 +462,18 @@ else:
         if len(walk_underserved) > 0:
             pct_health_gap = 100 * walk_underserved["health_completeness_flag"].mean()
             pct_edu_gap = 100 * walk_underserved["education_completeness_flag"].mean()
-            summary_lines.append(
-                f"\n**Completeness caveat:** among walking-underserved cells, "
-                f"{pct_health_gap:.1f}% also carry a possible health-facility OSM data gap, and "
-                f"{pct_edu_gap:.1f}% carry a possible education-facility data gap. Some portion of "
-                f"the underserved findings above may reflect incomplete OSM tagging rather than a "
-                f"confirmed absence of nearby facilities — see the Methodology tab / README for detail."
+            st.markdown(
+                f"""
+                <div class="callout">
+                <strong>Completeness caveat:</strong> among walking-underserved cells,
+                {pct_health_gap:.1f}% also carry a possible health-facility OSM data gap, and
+                {pct_edu_gap:.1f}% carry a possible education-facility data gap. Some portion of
+                the underserved findings above may reflect incomplete OSM tagging rather than a
+                confirmed absence of nearby facilities. See the Methodology tab / README for detail.
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
-
-    st.markdown("\n".join(summary_lines))
 
 st.caption(
     "See the accompanying ArcGIS StoryMap and written project report for the full narrative "

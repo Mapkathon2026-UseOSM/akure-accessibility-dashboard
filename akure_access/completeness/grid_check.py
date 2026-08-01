@@ -48,9 +48,9 @@ def flag_completeness(
     cost of comparing every cell's centroid against every facility with
     a plain per-cell distance scan. At this project's actual scale (a
     few thousand grid cells, a few dozen facilities per LGA) the
-    difference is not the dominant runtime cost -- unlike the network
+    difference is not the dominant runtime cost, unlike the network
     routing in accessibility/isochrones.py, which was the real
-    bottleneck -- but this scales correctly if ever applied to a much
+    bottleneck, but this scales correctly if ever applied to a much
     larger area or a much denser facility dataset.
 
     Parameters
@@ -70,7 +70,7 @@ def flag_completeness(
     geopandas.GeoDataFrame
         grid_gdf with added boolean columns 'health_completeness_flag'
         and 'education_completeness_flag' (True = settled but no
-        nearby OSM facility of that type -- a likely OSM data gap
+        nearby OSM facility of that type, a likely OSM data gap
         rather than confirmed non-access).
     """
     grid = grid_gdf.copy()
@@ -107,8 +107,7 @@ def _flag_via_spatial_index(
 
     # sjoin_nearest builds a spatial index over the right-hand
     # GeoDataFrame (facilities) once, then finds each left-hand row's
-    # (cell centroid's) nearest match in a single indexed query --
-    # rather than a linear distance() comparison against every facility
+    # (cell centroid's) nearest match in a single indexed query, # rather than a linear distance() comparison against every facility
     # per cell.
     joined = gpd.sjoin_nearest(
         centroids_gdf.reset_index(drop=True),

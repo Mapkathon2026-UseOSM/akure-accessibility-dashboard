@@ -7,7 +7,7 @@ for Akure North and Akure South (Ondo State) as part of Map<>kathon
 
 This package answers one question per settlement: "how long would it
 take to reach the nearest health facility or school, on foot, by
-okada (motorcycle taxi), or by vehicle?" -- combined with an OSM
+okada (motorcycle taxi), or by vehicle?", combined with an OSM
 completeness check, so that "no facility found nearby" can be
 distinguished from "OSM simply hasn't mapped it yet."
 
@@ -18,7 +18,7 @@ Two subpackages:
         mode, and computes travel-time-based access-deficit scores.
     akure_access.completeness
         Flags grid cells that look settled (dense buildings) but have
-        no nearby OSM-tagged facility -- a likely data gap rather
+        no nearby OSM-tagged facility, a likely data gap rather
         than a confirmed lack of access.
 
 This package expects its input data (roads, buildings, health

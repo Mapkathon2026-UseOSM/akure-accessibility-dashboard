@@ -2,8 +2,7 @@
 tests/test_cross_repo_integration.py
 
 Integration tests verifying that lga-osm-extractor's actual output
-schema is what akure-access-dashboard's analysis functions expect --
-i.e. that the two sibling repositories genuinely work together, not
+schema is what akure-access-dashboard's analysis functions expect, i.e. that the two sibling repositories genuinely work together, not
 just that each one's own unit tests pass in isolation.
 
 These tests require lga_extractor to be installed alongside this
@@ -13,7 +12,7 @@ single-repo test suite / CI job is unaffected. A dedicated CI workflow
 (.github/workflows/cross-repo-integration.yml) checks out both
 repositories and installs both packages specifically to run this file.
 
-No live OSM/Overpass calls are made here -- lga_extractor's cleaning
+No live OSM/Overpass calls are made here, lga_extractor's cleaning
 and export functions are exercised directly against small synthetic
 GeoDataFrames shaped like real OSM output, keeping this fast and
 network-independent while still testing the real schema contract
@@ -33,7 +32,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 lga_extractor = pytest.importorskip(
     "lga_extractor",
-    reason="lga_extractor not installed -- cross-repo integration tests skipped. "
+    reason="lga_extractor not installed, cross-repo integration tests skipped. "
     "Install it with 'pip install -e ../lga-osm-extractor' to run these.",
 )
 
@@ -54,7 +53,7 @@ def _synthetic_raw_extraction():
     """
     Mimics the shape of raw layers.extract_layers() output for one small
     synthetic LGA: a few buildings, a couple of facilities, and a tiny
-    connected road grid -- enough to exercise the full pipeline without
+    connected road grid, enough to exercise the full pipeline without
     needing a real OSM/Overpass query.
 
     Coordinates are small offsets (thousandths of a degree, i.e. roughly
@@ -63,7 +62,7 @@ def _synthetic_raw_extraction():
     labeling large plane-scale coordinates (e.g. x=650, y=650) as
     EPSG:4326 lat/lon would put them far outside valid longitude/
     latitude range, and reprojecting such a "coordinate" to a UTM CRS
-    sends it to infinity -- exactly the kind of bug this synthetic
+    sends it to infinity, exactly the kind of bug this synthetic
     fixture is supposed to help catch in the REAL pipeline, not
     introduce via unrealistic test data of its own.
     """
@@ -109,7 +108,7 @@ def test_extractor_output_schema_matches_dashboard_expectations():
     """
     Runs lga_extractor's real cleaning + export functions on synthetic
     raw data, then feeds the exported files straight into
-    akure_access's scoring pipeline -- verifying the column names and
+    akure_access's scoring pipeline, verifying the column names and
     types lga_extractor actually produces (osmid, name, geometry) are
     exactly what akure_access's functions expect to consume, with no
     schema mismatch requiring manual adjustment.
@@ -129,7 +128,7 @@ def test_extractor_output_schema_matches_dashboard_expectations():
     cleaned = clean_layers(raw, boundary_gdf=synthetic_boundary)
     cleaned.pop("_warnings", None)
 
-    # Akure is in UTM Zone 31N -- confirms the auto-selected zone matches
+    # Akure is in UTM Zone 31N, confirms the auto-selected zone matches
     # the original hardcoded default for this project's actual study area.
     assert cleaned["roads"].crs.to_string() == "EPSG:32631"
 
@@ -155,7 +154,7 @@ def test_extractor_output_schema_matches_dashboard_expectations():
         grid = add_building_density(grid, buildings_gdf)
         assert grid["building_count"].sum() == len(buildings_gdf), (
             "Building count from extractor output doesn't match what the dashboard "
-            "grid join found -- possible schema mismatch between the two repos."
+            "grid join found, possible schema mismatch between the two repos."
         )
 
         grid = flag_completeness(grid, health_gdf, schools_gdf, building_threshold=1, search_radius_m=300)
@@ -184,8 +183,7 @@ def test_extractor_output_schema_matches_dashboard_expectations():
 def test_extractor_run_log_captures_environment_for_reproducibility():
     """
     Confirms lga_extractor's run log (used for reproducibility, per the
-    Map<>kathon judging criteria) actually captures package versions --
-    this is what a reviewer checking reproducibility across the two
+    Map<>kathon judging criteria) actually captures package versions, this is what a reviewer checking reproducibility across the two
     repos would rely on.
     """
     from lga_extractor.logging_utils import log_run

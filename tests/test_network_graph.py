@@ -31,7 +31,7 @@ def _simple_road_grid(size_m=1000, step=500):
 
     Built as individual segments between adjacent grid points (rather
     than one long LineString per row/column) so that intersections
-    share an actual coordinate/node -- a single 2-point LineString
+    share an actual coordinate/node, a single 2-point LineString
     spanning an entire row would not create a shared node at interior
     crossing points, leaving the graph disconnected in a way that's easy
     to miss.
@@ -166,7 +166,7 @@ def test_batch_nearest_facility_distances_much_faster_than_naive_at_scale():
     """
     Performance regression guard: confirms the batch approach is
     genuinely faster than the naive per-pair approach when there are
-    many origins to score against the same facility set -- this is the
+    many origins to score against the same facility set, this is the
     actual scenario (many grid cells, few facilities) that caused the
     real-world hour-long runtime this fix addresses. Uses a generous
     margin (batch should be at least 2x faster) rather than a tight
@@ -207,7 +207,7 @@ def test_compute_isochrone_polygon_returns_larger_area_for_longer_trip_time():
     reachable-area polygon than a shorter one, on the same graph from
     the same origin. (They may be equal if the graph is small enough
     that the whole reachable area is already covered at the shorter
-    time -- this is not a failure, just means the test graph is small
+    time, this is not a failure, just means the test graph is small
     relative to the trip times used.)
     """
     roads = _simple_road_grid(size_m=2000, step=200)
@@ -225,7 +225,7 @@ def test_compute_isochrone_polygon_returns_larger_area_for_longer_trip_time():
 def test_compute_isochrone_polygon_returns_none_for_unmatchable_origin():
     """
     An origin point cannot always be matched to a graph node (e.g. an
-    empty graph, or a malformed point) -- this must return None rather
+    empty graph, or a malformed point), this must return None rather
     than raising, since build_isochrones_for_facilities() relies on
     this to skip unmatchable facilities gracefully rather than aborting
     the whole batch.

@@ -22,8 +22,8 @@ WALKING_SPEED_KPH = 5.0
 # and OSM has no distinct motorcycle network type), but with a lower
 # assumed average speed reflecting local traffic/road conditions and
 # okada behavior (weaving through traffic, using narrower roads cars
-# may avoid). These speed assumptions are approximations -- see the
-# methodology limitations section -- and can be overridden by passing
+# may avoid). These speed assumptions are approximations, see the
+# methodology limitations section, and can be overridden by passing
 # a custom `speed_kph` to graph_from_roads().
 MODE_CONFIG = {
     "walk": {"network_type": "walk", "speed_kph": 5.0},
@@ -60,7 +60,7 @@ def graph_from_roads(
        by the LGA extractor). Note: this fallback does not distinguish
        walk-only paths from vehicle roads, since that distinction lives
        in OSM's tag-based network typing, not in the extractor's plain
-       roads layer -- so `mode="walk"` and `mode="drive"` will yield the
+       roads layer, so `mode="walk"` and `mode="drive"` will yield the
        same underlying graph when built this way, differing only in
        assumed speed.
 
@@ -98,7 +98,7 @@ def graph_from_roads(
         # internally in both 1.x and 2.x, so _has_lengths(G) normally
         # short-circuits this fallback. It's kept as a defensive fallback
         # in case that internal behavior ever changes. ox.add_edge_lengths
-        # was removed from the top-level namespace in OSMnx 2.x -- the
+        # was removed from the top-level namespace in OSMnx 2.x, the
         # correct current location is ox.distance.add_edge_lengths.
         G = ox.distance.add_edge_lengths(G) if not _has_lengths(G) else G
     else:
@@ -133,7 +133,7 @@ def _graph_from_geometries(roads_gdf: gpd.GeoDataFrame) -> nx.MultiDiGraph:
     coordinate tuple. This is required for compatibility with
     osmnx.distance.nearest_nodes() (used by isochrones.nearest_graph_node)
     and with isochrones.compute_isochrone_polygon(), both of which read
-    node['x'] / node['y'] rather than the node key itself -- without this,
+    node['x'] / node['y'] rather than the node key itself, without this,
     nearest-node lookups against this fallback graph silently fail and
     every distance/time comes back as inf.
     """

@@ -8,16 +8,6 @@ as five sequential Jupyter notebooks. Together they take raw OSM data
 scored, exportable accessibility dataset for Akure North and Akure
 South LGAs.
 
-## Why notebooks, not scripts?
-
-The analysis benefits from being inspectable step-by-step: intermediate
-outputs (grid geometry, completeness flags, routing graphs) are worth
-looking at directly while developing or auditing the methodology,
-which a plain script would hide. The reusable, tested logic itself
-lives in `akure_access/` (imported by these notebooks); the notebooks
-are the orchestration + narrative layer on top of it, not where the
-core algorithms are implemented.
-
 ## Contents, in execution order
 
 | Notebook | Purpose | Depends on |
@@ -53,7 +43,7 @@ Notebook 01 from scratch.
 ## Outputs
 
 All notebooks write to `../data/processed/{lga}/`, `../reports/`, or
-`../visuals/` -- see each notebook's own "Export" section for exact
+`../visuals/`, see each notebook's own "Export" section for exact
 filenames.
 
 ## Notes
@@ -62,9 +52,9 @@ filenames.
   graphs and runs shortest-path routing per grid cell). As of the
   latest version, this uses a multi-source Dijkstra approach
   (`akure_access.accessibility.batch_nearest_facility_distances`)
-  rather than one shortest-path search per cell -- measured ~370x
+  rather than one shortest-path search per cell, measured ~370x
   faster than the original per-cell approach at this project's scale.
 - If you see a `ModuleNotFoundError` for `akure_access`, the notebook's
-  setup cell couldn't find the package on `sys.path` -- check that
+  setup cell couldn't find the package on `sys.path`, check that
   you're running from within the repo, or that the Colab Drive mount
   points at a folder named exactly "Akure Access Dashboard".

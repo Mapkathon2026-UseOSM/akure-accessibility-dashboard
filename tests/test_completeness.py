@@ -99,7 +99,7 @@ def test_summarize_completeness_reports_correct_percentages():
     grid = add_building_density(grid, buildings)
 
     # Completeness is checked from each cell's CENTROID, not its nearest
-    # building -- so place the health facility exactly at one cell's
+    # building, so place the health facility exactly at one cell's
     # centroid (250, 250) to guarantee that cell is not flagged, while
     # the other three cells' centroids remain far outside the radius.
     health = gpd.GeoDataFrame(geometry=[Point(250, 250)], crs="EPSG:32631")

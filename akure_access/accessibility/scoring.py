@@ -105,7 +105,7 @@ def add_access_times(
     Performance note: for each mode/service combination, this computes
     nearest-facility distance to every graph node ONCE via multi-source
     Dijkstra (batch_nearest_facility_distances()), then looks up each
-    grid cell's result in O(1) -- rather than running a fresh
+    grid cell's result in O(1), rather than running a fresh
     shortest-path search per grid cell per facility. This is
     substantially faster on real road networks with thousands of nodes
     and hundreds of settled cells (the previous per-cell approach could
@@ -151,7 +151,7 @@ def add_access_times(
             school_pts = schools_gdf.to_crs("EPSG:4326")
             # Compute centroids in the grid's own projected CRS (EPSG:32631,
             # metres) first, then reproject the resulting points to
-            # EPSG:4326 -- NOT the other way around. Taking a centroid
+            # EPSG:4326, NOT the other way around. Taking a centroid
             # directly in a geographic (lat/lon) CRS distorts the result,
             # since degrees aren't equal-area/equal-distance units; this
             # also silences GeoPandas' "Geometry is in a geographic CRS"
@@ -165,7 +165,7 @@ def add_access_times(
         # Multi-source Dijkstra: compute nearest-facility distance to
         # EVERY node in the graph in one pass per facility type, rather
         # than running a fresh shortest-path search per grid cell per
-        # facility. This is the key fix for real-LGA runtime -- the
+        # facility. This is the key fix for real-LGA runtime, the
         # previous per-cell approach did `settled_cells x facilities`
         # separate shortest-path searches per mode, which is what made a
         # full run take over an hour in practice on real road networks.
@@ -199,7 +199,7 @@ def add_access_times(
         # "unknown, treat as adequately served" fillna(0) handling in
         # add_access_deficit_score() to silently misclassify genuinely
         # unreachable cells as served. inf is only sanitized to NaN for
-        # GeoJSON export -- see sanitize_for_export() -- which must be
+        # GeoJSON export, see sanitize_for_export(), which must be
         # called AFTER add_access_deficit_score(), never before.
 
         # Backward-compatible unsuffixed columns when only walking is requested
@@ -231,8 +231,7 @@ def add_access_deficit_score(
     threshold_min : float
         Travel-time threshold (minutes) beyond which a cell is
         considered underserved for a given service, for this mode.
-        Note that a sensible threshold typically differs by mode --
-        30 minutes walking covers far less ground than 30 minutes by
+        Note that a sensible threshold typically differs by mode, 30 minutes walking covers far less ground than 30 minutes by
         okada or car, so consider passing a mode-appropriate threshold
         (e.g. a larger distance/time budget for faster modes) rather
         than reusing the walking default unchanged.
@@ -290,8 +289,7 @@ def sanitize_for_export(grid_gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
 
     This must only be called AFTER add_access_deficit_score() has already
     run for every mode of interest. inf values are the correct, meaningful
-    representation of "facility unreachable" while scoring is happening --
-    add_access_deficit_score() specifically checks for inf to correctly
+    representation of "facility unreachable" while scoring is happening, add_access_deficit_score() specifically checks for inf to correctly
     treat unreachable cells as underserved, and calling this function
     beforehand would silently break that (NaN's "unknown" handling treats
     a cell as adequately served instead of underserved, which is wrong).
