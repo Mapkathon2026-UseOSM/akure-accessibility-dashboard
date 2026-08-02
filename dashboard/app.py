@@ -27,11 +27,27 @@ Run with (from repo root):
 
 import json
 import os
+import sys
 
 import geopandas as gpd
 import pandas as pd
 import streamlit as st
 import leafmap.foliumap as leafmap
+
+# Streamlit Cloud installs from dashboard/requirements.txt, not
+# pyproject.toml, and that file has never actually pip-installed the
+# local akure_access package (confirmed: it's absent from the full
+# list of installed packages in the deploy logs). akure_access has
+# only ever been importable there by accident of working directory,
+# not because it was properly installed. Rather than depend on that
+# continuing to work, explicitly add the repo root (this file's
+# grandparent directory: dashboard/app.py -> dashboard/ -> repo root)
+# to sys.path before importing anything from akure_access, so this
+# works regardless of whether pip install ever ran for the local
+# package, on Streamlit Cloud or anywhere else.
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
 
 from akure_access.insights import describe_interactive_view
 
