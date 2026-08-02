@@ -27,14 +27,6 @@ Run with (from repo root):
 
 import json
 import os
-import sys
-from pathlib import Path
-
-# Streamlit Cloud only adds this file's own directory (dashboard/) to
-# sys.path, not the repo root. akure_access/ lives at the repo root
-# (as a sibling of dashboard/), so it isn't importable there by default.
-# This adds the repo root explicitly.
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import geopandas as gpd
 import pandas as pd
