@@ -40,6 +40,10 @@ app = [
     "streamlit>=1.32",
     "leafmap>=0.31",
 ]
+static-maps = [
+    "matplotlib>=3.8",
+    "contextily>=1.5",
+]
 notebooks = [
     "jupyter>=1.0",
 ]
@@ -50,6 +54,8 @@ all = [
     "keplergl>=0.3.2",
     "streamlit>=1.32",
     "leafmap>=0.31",
+    "matplotlib>=3.8",
+    "contextily>=1.5",
     "jupyter>=1.0",
     "pytest>=8.0",
 ]
