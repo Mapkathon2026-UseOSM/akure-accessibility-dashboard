@@ -25,12 +25,15 @@ Run with (from repo root):
     streamlit run dashboard/app.py
 """
 
+import json
 import os
 
 import geopandas as gpd
 import pandas as pd
 import streamlit as st
 import leafmap.foliumap as leafmap
+
+from akure_access.insights import describe_interactive_view
 
 st.set_page_config(page_title="Akure Access Dashboard", page_icon="◎", layout="wide")
 
@@ -488,6 +491,10 @@ if lga_choice == "Both (compare)":
             basemap=BASEMAP_OPTIONS[basemap_choice],
             colorblind_safe=colorblind_safe,
         )
+        st.markdown(
+            f'<div class="callout">{describe_interactive_view(data[available_lgas[0]], available_lgas[0], mode_choice, view_choice)}</div>',
+            unsafe_allow_html=True,
+        )
     with map_col2:
         st.markdown(f"**{available_lgas[1]}**")
         render_map(
@@ -497,6 +504,10 @@ if lga_choice == "Both (compare)":
             basemap=BASEMAP_OPTIONS[basemap_choice],
             colorblind_safe=colorblind_safe,
         )
+        st.markdown(
+            f'<div class="callout">{describe_interactive_view(data[available_lgas[1]], available_lgas[1], mode_choice, view_choice)}</div>',
+            unsafe_allow_html=True,
+        )
 else:
     render_map(
         data[lga_choice], view_choice, mode_choice,
@@ -504,6 +515,16 @@ else:
         show_isochrones=show_isochrones,
         basemap=BASEMAP_OPTIONS[basemap_choice],
         colorblind_safe=colorblind_safe,
+    )
+    # Dynamic map description and inferred result: recomputed straight
+    # from the currently selected LGA/mode/view every time any of those
+    # change (Streamlit reruns this script on every widget interaction),
+    # so the caption shown always matches exactly what the map above is
+    # currently displaying, rather than a fixed caption written once
+    # that could silently drift out of sync with the actual selection.
+    st.markdown(
+        f'<div class="callout">{describe_interactive_view(data[lga_choice], lga_choice, mode_choice, view_choice)}</div>',
+        unsafe_allow_html=True,
     )
 
 section_divider("Most underserved settlements")
@@ -642,6 +663,7 @@ static_scope_lgas = available_lgas if lga_choice == "Both (compare)" else [lga_c
 # files keeps this working against older runs generated before the
 # web/ subfolder existed.
 static_files_found = {}  # {lga: (display_dir, [filenames])}
+static_captions = {}  # {lga: {filename: caption_text}}
 for lga in static_scope_lgas:
     lga_dir = os.path.join(VISUALS_DIR, lga.replace(" ", "_"))
     web_dir = os.path.join(lga_dir, "web")
@@ -652,6 +674,19 @@ for lga in static_scope_lgas:
         )
         if files:
             static_files_found[lga] = (display_dir, files)
+
+    # captions.json is always written to the top-level LGA folder (not
+    # the web/ subfolder) by generate_all_static_outputs, but its keys
+    # are plain filenames shared by both the print and web tiers (same
+    # figure, same filename, different folder/resolution), so this
+    # lookup works correctly regardless of which tier is being displayed.
+    captions_path = os.path.join(lga_dir, "captions.json")
+    if os.path.exists(captions_path):
+        try:
+            with open(captions_path, "r", encoding="utf-8") as f:
+                static_captions[lga] = json.load(f)
+        except (json.JSONDecodeError, OSError):
+            static_captions[lga] = {}
 
 if not static_files_found:
     st.info(
@@ -704,9 +739,18 @@ else:
                 # fill the whole page while every other category's images
                 # stayed a normal, consistent size.
                 cols = st.columns(3)
+                lga_captions = static_captions.get(lga, {})
                 for idx, fname in enumerate(cat_files):
                     with cols[idx % 3]:
-                        st.image(os.path.join(display_dir, fname), caption=fname, use_container_width=True)
+                        st.image(os.path.join(display_dir, fname), use_container_width=True)
+                        caption_text = lga_captions.get(fname)
+                        if not caption_text:
+                            # Backward compatibility: older runs generated
+                            # before captions.json existed won't have a
+                            # real caption available, fall back to a
+                            # readable label rather than showing nothing.
+                            caption_text = os.path.splitext(fname)[0].replace("_", " ")
+                        st.caption(caption_text)
 
     zip_path = os.path.join(VISUALS_DIR, "akure_access_static_maps.zip")
     if os.path.exists(zip_path):
