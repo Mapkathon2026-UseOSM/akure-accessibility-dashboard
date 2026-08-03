@@ -32,10 +32,10 @@ jobs:
         python-version: ["3.11", "3.12"]
 
     steps:
-      - name: Check out akure-access-dashboard
+      - name: Check out akure-accessibility-dashboard
         uses: actions/checkout@v4
         with:
-          path: akure-access-dashboard
+          path: akure-accessibility-dashboard
 
       - name: Check out lga-osm-extractor (sibling repo)
         uses: actions/checkout@v4
@@ -55,18 +55,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e .
 
-      - name: Install akure-access-dashboard
-        working-directory: akure-access-dashboard
+      - name: Install akure-accessibility-dashboard
+        working-directory: akure-accessibility-dashboard
         run: |
           pip install -r requirements.txt
           pip install -e .
           pip install pytest
 
       - name: Run cross-repo integration tests
-        working-directory: akure-access-dashboard
+        working-directory: akure-accessibility-dashboard
         run: pytest tests/test_cross_repo_integration.py -v
 
       - name: Run each repo's own offline test suite (sanity check)
         run: |
           cd lga-osm-extractor && pytest tests/ -m "not integration" -v
-          cd ../akure-access-dashboard && pytest tests/ -m "not integration" -v
+          cd ../akure-accessibility-dashboard && pytest tests/ -m "not integration" -v

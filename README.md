@@ -1,7 +1,7 @@
 # Mapping the Gap: Health & Education Accessibility in Akure
 
-[![Tests](https://github.com/Mapkathon2026-UseOSM/akure-access-dashboard/actions/workflows/test.yml/badge.svg)](https://github.com/Mapkathon2026-UseOSM/akure-access-dashboard/actions/workflows/test.yml)
-[![Cross-Repo Integration](https://github.com/Mapkathon2026-UseOSM/akure-access-dashboard/actions/workflows/cross-repo-integration.yml/badge.svg)](https://github.com/Mapkathon2026-UseOSM/akure-access-dashboard/actions/workflows/cross-repo-integration.yml)
+[![Tests](https://github.com/Mapkathon2026-UseOSM/akure-accessibility-dashboard/actions/workflows/test.yml/badge.svg)](https://github.com/Mapkathon2026-UseOSM/akure-accessibility-dashboard/actions/workflows/test.yml)
+[![Cross-Repo Integration](https://github.com/Mapkathon2026-UseOSM/akure-accessibility-dashboard/actions/workflows/cross-repo-integration.yml/badge.svg)](https://github.com/Mapkathon2026-UseOSM/akure-accessibility-dashboard/actions/workflows/cross-repo-integration.yml)
 
 ## Live links
 
@@ -44,7 +44,7 @@ OSM completeness check, an interactive dashboard, and a narrative StoryMap.
 ## Repository structure
 
 ```
-akure-access-dashboard/
+akure-accessibility-dashboard/
 ├── README.md
 ├── LICENSE
 ├── pyproject.toml             # packaging config, enables `pip install -e .`

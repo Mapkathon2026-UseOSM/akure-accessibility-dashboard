@@ -2,7 +2,7 @@
 tests/test_cross_repo_integration.py
 
 Integration tests verifying that lga-osm-extractor's actual output
-schema is what akure-access-dashboard's analysis functions expect, i.e. that the two sibling repositories genuinely work together, not
+schema is what akure-accessibility-dashboard's analysis functions expect, i.e. that the two sibling repositories genuinely work together, not
 just that each one's own unit tests pass in isolation.
 
 These tests require lga_extractor to be installed alongside this

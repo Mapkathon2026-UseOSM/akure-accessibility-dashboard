@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "akure-access-dashboard"
+name = "akure-accessibility-dashboard"
 version = "0.1.0"
 description = "OSM-driven health and education accessibility analysis for Akure North and Akure South LGAs, Ondo State, Nigeria, built for Map<>kathon 2026 (OSM Dashboard or Analysis track)."
 readme = "README.md"
@@ -61,7 +61,7 @@ all = [
 ]
 
 [project.urls]
-Repository = "https://github.com/Mapkathon2026-UseOSM/akure-access-dashboard"
+Repository = "https://github.com/Mapkathon2026-UseOSM/akure-accessibility-dashboard"
 "Companion tool" = "https://github.com/Mapkathon2026-UseOSM/lga-osm-extractor"
 "Map<>kathon 2026" = "https://www.useosm.org/"
 
