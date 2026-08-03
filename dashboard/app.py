@@ -114,7 +114,7 @@ st.markdown(
         border: 1px solid rgba(196, 98, 45, 0.25);
     }
     .hero-title {
-        font-size: 36px;
+        font-size: 38px;
         font-weight: 700;
         color: #F2EFE9;
         margin-bottom: 0.35rem;
@@ -127,10 +127,34 @@ st.markdown(
         font-size: 1.6rem;
     }
     .hero-sub {
-        font-size: 18px;
+        font-size: 20px;
         color: #b9b6ad;
         max-width: 62rem;
         line-height: 1.5;
+    }
+
+    /* Every widget label rendered above the interactive map (Study
+       area, Access view, Transport mode, Basemap, the two checkboxes)
+       is one of the "layers before the interactive layer" the size
+       bump applies to. All of this project's st.selectbox/st.radio/
+       st.checkbox calls happen to sit above the map (verified: none
+       appear after it), so this can safely target every widget label
+       app-wide without also affecting anything below the map. */
+    [data-testid="stWidgetLabel"] p {
+        font-size: 1.05rem;
+    }
+
+    /* st.caption() is used both above AND below the map (the static
+       maps section reuses it for image captions), so it can't be
+       safely bumped globally without also affecting those. The two
+       explanatory captions above the map are rendered via this class
+       instead of st.caption() specifically so they can be sized
+       independently. */
+    .pre-map-caption {
+        font-size: 1.05rem;
+        color: #b9b6ad;
+        line-height: 1.5;
+        margin-bottom: 0.5rem;
     }
 
     /* Section divider: a thin gradient rule with a ring mark,
@@ -358,10 +382,11 @@ with col5:
         ),
     )
 
-threshold_note = st.caption(
-    "Underserved thresholds differ by mode, since a 30-minute walk covers far less ground "
-    "than 30 minutes by okada or car, so each mode uses its own distance/time budget. "
-    "Cells with no visible buildings are excluded from scoring."
+st.markdown(
+    '<p class="pre-map-caption">Underserved thresholds differ by mode, since a 30-minute '
+    "walk covers far less ground than 30 minutes by okada or car, so each mode uses its own "
+    "distance/time budget. Cells with no visible buildings are excluded from scoring.</p>",
+    unsafe_allow_html=True,
 )
 
 isochrone_data = load_isochrones()
@@ -468,16 +493,40 @@ def render_map(gdf, view, mode, isochrones_gdf=None, show_isochrones=False,
         # notebook 05. This overlay is for visualization only; no
         # further analysis happens on it here.
         isochrones_wgs84 = isochrones_gdf.to_crs("EPSG:4326")
-        m.add_data(
-            isochrones_wgs84,
-            column="trip_time_min",
-            scheme="UserDefined",
-            classification_kwds={"bins": [15, 30, 45]},
-            colors=["#B3D9FF", "#5B9BD5", "#1F4E79"] if not colorblind_safe else ["#9AD1D4", "#3D8B95", "#0B4F55"],
-            labels=["Within 15 min", "Within 30 min", "Within 45 min"],
-            legend_title="Health Facility Walking Catchment",
-            layer_name="Health facility walking catchments",
+
+        # Defensive sanity check: if the source file's CRS metadata was
+        # wrong (e.g. generated before Notebook 03 explicitly reprojected
+        # isochrones to WGS84 before saving), to_crs() above becomes a
+        # silent no-op when the source is mislabeled as already being
+        # EPSG:4326, and raw UTM-meter coordinates (hundreds of
+        # thousands) pass through unchanged. Leaflet then tries to fit
+        # the map to an enormous, invalid extent, the map appears to
+        # "go blank except a tiny dot" symptom this catches instead of
+        # rendering silently broken output.
+        bounds = isochrones_wgs84.total_bounds  # west, south, east, north
+        valid_lonlat = (
+            len(bounds) == 4
+            and -180 <= bounds[0] <= 180 and -180 <= bounds[2] <= 180
+            and -90 <= bounds[1] <= 90 and -90 <= bounds[3] <= 90
         )
+        if not valid_lonlat:
+            st.warning(
+                "The walking-catchments overlay for this LGA has invalid coordinates "
+                "(likely generated before a CRS fix; re-run Notebook 03's isochrone "
+                "export step to regenerate it correctly). Skipping this overlay so it "
+                "doesn't distort the rest of the map."
+            )
+        else:
+            m.add_data(
+                isochrones_wgs84,
+                column="trip_time_min",
+                scheme="UserDefined",
+                classification_kwds={"bins": [15, 30, 45]},
+                colors=["#B3D9FF", "#5B9BD5", "#1F4E79"] if not colorblind_safe else ["#9AD1D4", "#3D8B95", "#0B4F55"],
+                labels=["Within 15 min", "Within 30 min", "Within 45 min"],
+                legend_title="Health Facility Walking Catchment",
+                layer_name="Health facility walking catchments",
+            )
     elif show_isochrones and (isochrones_gdf is None or isochrones_gdf.empty):
         st.info(
             "No precomputed walking catchments found for this LGA. "
@@ -488,10 +537,11 @@ def render_map(gdf, view, mode, isochrones_gdf=None, show_isochrones=False,
 
 
 section_divider("Access map")
-st.caption(
-    "Combined view colors cells by deficit score (green = well served, "
-    "amber/red = underserved). Health/Education-only views show a continuous "
-    "gradient of travel time in minutes. Legend appears bottom-right of the map."
+st.markdown(
+    '<p class="pre-map-caption">Combined view colors cells by deficit score (green = well '
+    "served, amber/red = underserved). Health/Education-only views show a continuous "
+    "gradient of travel time in minutes. Legend appears bottom-right of the map.</p>",
+    unsafe_allow_html=True,
 )
 if lga_choice == "Both (compare)":
     # Side-by-side columns, not tabs: "compare" implies seeing both
