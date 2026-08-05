@@ -1,8 +1,10 @@
-geopandas>=0.14
-shapely>=2.0
+geopandas==1.1.4
+shapely==2.1.2
 fiona>=1.9
-pandas>=2.0
-streamlit>=1.32
-leafmap>=0.31
-mapclassify>=2.6
-osmnx>=1.9
+pandas==3.0.5
+streamlit==1.60.0
+leafmap==0.63.0
+folium==0.20.0
+branca==0.8.2
+mapclassify==2.10.0
+osmnx==2.1.1

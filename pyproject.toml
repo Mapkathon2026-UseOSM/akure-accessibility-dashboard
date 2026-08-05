@@ -39,6 +39,7 @@ viz = [
 app = [
     "streamlit>=1.32",
     "leafmap>=0.31",
+    "mapclassify>=2.6",
 ]
 static-maps = [
     "matplotlib>=3.8",
@@ -54,6 +55,7 @@ all = [
     "keplergl>=0.3.2",
     "streamlit>=1.32",
     "leafmap>=0.31",
+    "mapclassify>=2.6",
     "matplotlib>=3.8",
     "contextily>=1.5",
     "jupyter>=1.0",

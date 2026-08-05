@@ -421,6 +421,8 @@ def render_map(gdf, view, mode, basemap="CartoDB.Positron", colorblind_safe=Fals
             m.add_data(
                 settled,
                 column=col,
+                scheme="Quantiles",
+                k=6,
                 cmap=CONTINUOUS_CMAP[palette_key],
                 legend_title=f"{service} Access Time, {MODE_LABELS[mode]} (min)",
                 layer_name=f"{view} access ({mode})",
