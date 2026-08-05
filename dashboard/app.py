@@ -8,13 +8,6 @@ Expects pre-computed outputs from notebooks 01-04, specifically:
     data/processed/akure_north/grid_access_scored.geojson
     data/processed/akure_south/grid_access_scored.geojson
 
-Optionally uses, if present (notebook 03, Section 5.2):
-    data/processed/{lga}/isochrones_health_walk.geojson
-This powers the "walking catchments" overlay toggle. It is genuinely
-optional, since the dashboard works normally without it, and not every
-deployment will necessarily have re-run notebook 03 since this overlay
-was added.
-
 Visual design: see the CSS block below for the full token system
 (palette, type, the concentric-ring signature motif used as section
 dividers). Grounded in the subject rather than a generic dashboard
@@ -69,9 +62,9 @@ st.set_page_config(page_title="Akure Access Dashboard", page_icon="◎", layout=
 #   IBM Plex Mono  - data figures, ties to the coordinate/data nature
 #                    of a GIS tool
 # Signature motif:
-#   Concentric rings, echoing the isochrone catchment rings that are
-#   the actual visual/conceptual core of an accessibility study, used
-#   as section dividers and the page icon.
+#   Concentric rings, tied to the accessibility/catchment concept at
+#   the conceptual core of this study, used as section dividers and
+#   the page icon.
 # ============================================================
 st.markdown(
     """
@@ -274,16 +267,6 @@ DATA_PATHS = {
     "Akure South": "data/processed/akure_south/grid_access_scored.geojson",
 }
 
-# Precomputed health-facility walking catchments (see
-# notebooks/03_accessibility_analysis.ipynb, Section 5.2). This is an
-# optional overlay, loaded only if the file exists, so the dashboard
-# still works normally for an LGA where this notebook hasn't been
-# re-run since this feature was added.
-ISOCHRONE_PATHS = {
-    "Akure North": "data/processed/akure_north/isochrones_health_walk.geojson",
-    "Akure South": "data/processed/akure_south/isochrones_health_walk.geojson",
-}
-
 # Basemap options exposed in the UI, mapped to the provider names
 # leafmap/xyzservices expects. All three are free, token-free tile
 # sources (folium's Leaflet base, not Mapbox), so this toggle carries
@@ -292,15 +275,6 @@ ISOCHRONE_PATHS = {
 BASEMAP_OPTIONS = {
     "Light (CartoDB Positron)": "CartoDB.Positron",
     "Streets (OpenStreetMap)": "OpenStreetMap",
-    # "Esri.WorldImagery" (dot-separated) is NOT a valid basemap name in
-    # leafmap's registry, calling add_basemap with it doesn't raise, it
-    # silently prints a huge list of valid names and adds nothing, which
-    # is exactly why this looked like "does nothing when clicked" rather
-    # than an obvious error. The correct registered name uses an
-    # underscore here specifically (most other Esri basemaps use a dot,
-    # e.g. Esri.NatGeoWorldMap, but WorldImagery/WorldStreetMap/
-    # WorldTopoMap are special-cased with underscores instead).
-    "Satellite (Esri)": "Esri_WorldImagery",
 }
 
 
@@ -312,24 +286,6 @@ def load_data():
             gdf = gpd.read_file(path)
             gdf["lga"] = lga
             frames[lga] = gdf
-        except Exception:
-            frames[lga] = None
-    return frames
-
-
-@st.cache_data
-def load_isochrones():
-    """
-    Loads precomputed health-facility walking catchments per LGA, if
-    the file exists. Returns None (not an error) for any LGA where it
-    doesn't, since this is an optional overlay, not a required input,
-    so its absence should never block the rest of the dashboard from
-    working normally.
-    """
-    frames = {}
-    for lga, path in ISOCHRONE_PATHS.items():
-        try:
-            frames[lga] = gpd.read_file(path)
         except Exception:
             frames[lga] = None
     return frames
@@ -405,36 +361,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-isochrone_data = load_isochrones()
-show_isochrones = st.checkbox(
-    "Show 15/30/45-min walking catchments around health facilities",
-    value=False,
-    help=(
-        "An illustrative overlay showing roughly how far someone can walk from "
-        "each health facility within 15, 30, or 45 minutes: a convex-hull "
-        "approximation, not the project's actual access-deficit scoring (which "
-        "uses exact network routing; see the methodology notes for detail)."
-    ),
-)
-
-if show_isochrones:
-    # Check availability for whichever LGA(s) are actually in view right
-    # now, and say so immediately, next to the checkbox itself, rather
-    # than only via a small caption buried under a 600px map further
-    # down the page, which is easy to miss entirely, this file is an
-    # OPTIONAL output of notebook 03 Section 5.2, so it's expected to be
-    # absent unless that section has specifically been run.
-    lgas_to_check = available_lgas if lga_choice == "Both (compare)" else [lga_choice]
-    missing_isochrones = [
-        lga for lga in lgas_to_check
-        if isochrone_data.get(lga) is None or isochrone_data.get(lga).empty
-    ]
-    if missing_isochrones:
-        st.warning(
-            f"No precomputed walking catchments found for: {', '.join(missing_isochrones)}. "
-            "This overlay needs `isochrones_health_walk.geojson`, an optional output of "
-            "Notebook 03, Section 5.2, run that section for the LGA(s) above to enable it."
-        )
 
 
 MODE_LABELS = {"walk": "Walking", "okada": "Okada", "drive": "Driving"}
@@ -467,8 +393,7 @@ def score_column(view, mode):
     return col
 
 
-def render_map(gdf, view, mode, isochrones_gdf=None, show_isochrones=False,
-                basemap="CartoDB.Positron", colorblind_safe=False):
+def render_map(gdf, view, mode, basemap="CartoDB.Positron", colorblind_safe=False):
     m = leafmap.Map()
     m.add_basemap(basemap)
 
@@ -503,104 +428,6 @@ def render_map(gdf, view, mode, isochrones_gdf=None, show_isochrones=False,
     elif col not in settled.columns:
         st.info(f"Column '{col}' not found. Re-run notebook 03 with modes including '{mode}'.")
 
-    if show_isochrones and isochrones_gdf is not None and not isochrones_gdf.empty:
-        # Reproject to WGS84 for web-map display, matching the same
-        # one-way CRS conversion done for the kepler.gl exports in
-        # notebook 05. This overlay is for visualization only; no
-        # further analysis happens on it here.
-        isochrones_wgs84 = isochrones_gdf.to_crs("EPSG:4326")
-
-        # Defensive sanity check: if the source file's CRS metadata was
-        # wrong (e.g. generated before Notebook 03 explicitly reprojected
-        # isochrones to WGS84 before saving), to_crs() above becomes a
-        # silent no-op when the source is mislabeled as already being
-        # EPSG:4326, and raw UTM-meter coordinates (hundreds of
-        # thousands) pass through unchanged. Leaflet then tries to fit
-        # the map to an enormous, invalid extent, the map appears to
-        # "go blank except a tiny dot" symptom this catches instead of
-        # rendering silently broken output.
-        bounds = isochrones_wgs84.total_bounds  # west, south, east, north
-        valid_lonlat = (
-            len(bounds) == 4
-            and -180 <= bounds[0] <= 180 and -180 <= bounds[2] <= 180
-            and -90 <= bounds[1] <= 90 and -90 <= bounds[3] <= 90
-        )
-        if not valid_lonlat:
-            st.warning(
-                "The walking-catchments overlay for this LGA has invalid coordinates "
-                "(likely generated before a CRS fix; re-run Notebook 03's isochrone "
-                "export step to regenerate it correctly). Skipping this overlay so it "
-                "doesn't distort the rest of the map."
-            )
-        else:
-            # Build bins/colors/labels from whichever trip-time bands
-            # ACTUALLY exist in this LGA's data, rather than hardcoding
-            # [15, 30, 45]. A sparse walk network (confirmed for Akure
-            # North: ~9.5 road-graph nodes/km2 vs Akure South's ~36/km2)
-            # can mean the 15-minute isochrone never forms at all for any
-            # facility, since 15 minutes of walking doesn't reach enough
-            # graph nodes to build a valid ring. Hardcoding bins that
-            # assume all three bands always exist mismatched the actual
-            # data for that LGA, this derives the real bands present so
-            # the legend always accurately reflects what's actually shown,
-            # and a missing band for one LGA no longer risks breaking (or
-            # mislabeling) the display for either LGA.
-            full_style = {15: "#B3D9FF", 30: "#5B9BD5", 45: "#1F4E79"}
-            full_style_cb = {15: "#9AD1D4", 30: "#3D8B95", 45: "#0B4F55"}
-            style_map = full_style_cb if colorblind_safe else full_style
-
-            present_bands = sorted(
-                b for b in isochrones_wgs84["trip_time_min"].dropna().unique() if b in style_map
-            )
-            try:
-                if not present_bands:
-                    st.info(
-                        "This LGA's walking-catchments file doesn't contain any of the "
-                        "expected 15/30/45-minute bands; skipping the overlay."
-                    )
-                else:
-                    m.add_data(
-                        isochrones_wgs84,
-                        column="trip_time_min",
-                        scheme="UserDefined",
-                        classification_kwds={"bins": present_bands},
-                        colors=[style_map[b] for b in present_bands],
-                        labels=[f"Within {b} min" for b in present_bands],
-                        legend_title="Health Facility Walking Catchment",
-                        layer_name="Health facility walking catchments",
-                    )
-                    if len(present_bands) < 3:
-                        missing = sorted(set(style_map) - set(present_bands))
-                        st.caption(
-                            f"Note: this LGA's walking-catchments overlay only shows "
-                            f"{', '.join(f'{b}-min' for b in present_bands)} bands. "
-                            f"{', '.join(f'{b}-min' for b in missing)} "
-                            f"{'band' if len(missing) == 1 else 'bands'} "
-                            f"{'is' if len(missing) == 1 else 'are'} not present, most "
-                            f"likely because the road network near health facilities here "
-                            f"is too sparse for that short a walk to reach far enough to "
-                            f"form a catchment ring, this is a real reflection of the "
-                            f"underlying road network, not a bug."
-                        )
-            except Exception as exc:
-                # Never let a problem with this OPTIONAL overlay take down
-                # the rest of the map (the access-deficit layer added
-                # above is unaffected either way, since it's added before
-                # this block runs). Whatever the exact cause, degrade to
-                # a visible warning rather than an uncaught exception that
-                # prevents m.to_streamlit() from ever being reached below,
-                # which is what previously made the ENTIRE map (not just
-                # this overlay) appear completely blank.
-                st.warning(
-                    f"Couldn't render the walking-catchments overlay for this LGA "
-                    f"({type(exc).__name__}: {exc}). The rest of the map is unaffected."
-                )
-    elif show_isochrones and (isochrones_gdf is None or isochrones_gdf.empty):
-        st.info(
-            "No precomputed walking catchments found for this LGA. "
-            "Re-run notebook 03 (Section 5.2) to generate them."
-        )
-
     m.to_streamlit(height=600)
 
 
@@ -620,8 +447,6 @@ if lga_choice == "Both (compare)":
         st.markdown(f"**{available_lgas[0]}**")
         render_map(
             data[available_lgas[0]], view_choice, mode_choice,
-            isochrones_gdf=isochrone_data.get(available_lgas[0]),
-            show_isochrones=show_isochrones,
             basemap=BASEMAP_OPTIONS[basemap_choice],
             colorblind_safe=colorblind_safe,
         )
@@ -633,8 +458,6 @@ if lga_choice == "Both (compare)":
         st.markdown(f"**{available_lgas[1]}**")
         render_map(
             data[available_lgas[1]], view_choice, mode_choice,
-            isochrones_gdf=isochrone_data.get(available_lgas[1]),
-            show_isochrones=show_isochrones,
             basemap=BASEMAP_OPTIONS[basemap_choice],
             colorblind_safe=colorblind_safe,
         )
@@ -645,8 +468,6 @@ if lga_choice == "Both (compare)":
 else:
     render_map(
         data[lga_choice], view_choice, mode_choice,
-        isochrones_gdf=isochrone_data.get(lga_choice),
-        show_isochrones=show_isochrones,
         basemap=BASEMAP_OPTIONS[basemap_choice],
         colorblind_safe=colorblind_safe,
     )
