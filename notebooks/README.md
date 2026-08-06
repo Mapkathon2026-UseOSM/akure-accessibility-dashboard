@@ -24,9 +24,9 @@ core algorithms are implemented.
 |---|---|---|
 | `01_data_extraction.ipynb` | Runs `lga_extractor` for both LGAs, saves raw layers to `data/processed/` | `lga-osm-extractor` (sibling repo) |
 | `02_completeness_assessment.ipynb` | Builds the analysis grid, flags likely OSM data gaps | Output of 01 |
-| `03_accessibility_analysis.ipynb` | Builds routable road networks, scores travel time to health/education facilities for all 3 modes | Output of 02 |
-| `04_results_summary.ipynb` | Cross-mode and cross-LGA comparison tables/charts | Output of 03 |
-| `05_kepler_visualization.ipynb` | Exports standalone interactive kepler.gl HTML maps | Output of 03/04 |
+| `03_accessibility_analysis.ipynb` | Builds routable road networks, scores travel time to health/education facilities for all 3 modes, precomputes walking isochrones, and generates every publication-styled static map/chart + caption per LGA | Output of 02 |
+| `04_results_summary.ipynb` | Cross-mode and cross-LGA comparison tables, exported as CSVs, plus the combined two-LGA scored dataset | Output of 03 |
+| `05_kepler_visualization.ipynb` | Exports 3 standalone interactive kepler.gl HTML maps (combined deficit, mode-comparison, completeness) | Output of 03/04 |
 
 ## Workflow
 
@@ -52,9 +52,16 @@ Notebook 01 from scratch.
 
 ## Outputs
 
-All notebooks write to `../data/processed/{lga}/`, `../reports/`, or
-`../visuals/`, see each notebook's own "Export" section for exact
-filenames.
+| Path | Written by | Contents |
+|---|---|---|
+| `../data/processed/{lga}/` | 01, 02, 03 | Raw + cleaned layers, the scored grid, isochrones |
+| `../data/processed/combined_access_scored.geojson` | 04 | Both LGAs' scored grids combined into one file |
+| `../visuals/{lga}/*.jpg`, `web/*.jpg`, `captions.json` | 03 | Print + web tier static maps/charts, per LGA, with generated captions |
+| `../visuals/akure_access_static_maps.zip` | 03 | Zip of the above, for download (generated locally, not committed to the repo) |
+| `../visuals/*.html` | 05 | 3 standalone kepler.gl interactive maps |
+| `../reports/*.csv` | 04 | Cross-mode / cross-LGA comparison tables |
+
+See each notebook's own "Export" section for exact filenames.
 
 ## Notes
 

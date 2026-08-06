@@ -3,26 +3,38 @@
 [![Tests](https://github.com/Mapkathon2026-UseOSM/akure-accessibility-dashboard/actions/workflows/test.yml/badge.svg)](https://github.com/Mapkathon2026-UseOSM/akure-accessibility-dashboard/actions/workflows/test.yml)
 [![Cross-Repo Integration](https://github.com/Mapkathon2026-UseOSM/akure-accessibility-dashboard/actions/workflows/cross-repo-integration.yml/badge.svg)](https://github.com/Mapkathon2026-UseOSM/akure-accessibility-dashboard/actions/workflows/cross-repo-integration.yml)
 
-## Live links
+**Live dashboard:** https://akure-accessibility-dashboard-analysis.streamlit.app/ · **GitHub:** https://github.com/Mapkathon2026-UseOSM/akure-accessibility-dashboard
 
-- **Interactive dashboard:** https://akure-accessibility-dashboard-analysis.streamlit.app/
-- **ArcGIS StoryMap:** _link pending, see `docs/storymap_link.md`_
+An OSM-driven accessibility analysis for Akure North and Akure South
+LGAs (Ondo State, Nigeria), built for **Map<>kathon 2026** (Dashboard
+or Analysis track). Consumes OSM data extracted by the companion
+**[Nigerian LGA OSM Extractor](https://github.com/Mapkathon2026-UseOSM/lga-osm-extractor)** tool and turns
+it into a health/education access-deficit analysis, an integrated OSM
+completeness check, and an interactive dashboard.
 
-An OSM-driven accessibility analysis for Akure North and Akure South LGAs
-(Ondo State, Nigeria), built for **Map<>kathon 2026** (OSM Dashboard or
-Analysis track). This repository consumes OSM data extracted by the
-companion **[Nigerian LGA OSM Extractor](../lga-osm-extractor)** tool and
-turns it into a health/education access-deficit analysis, an integrated
-OSM completeness check, an interactive dashboard, and a narrative StoryMap.
+> **How this serves the public good:** this project uses OSM's own
+> road and facility data to identify which communities in Akure North
+> and South lack practical access to healthcare and education, across
+> walking, okada, and driving, and, critically, distinguishes genuine
+> service gaps from places where OSM itself simply hasn't caught up
+> yet. Treating an OSM data gap as a confirmed service gap could
+> misdirect real planning attention, so this project surfaces both
+> findings honestly rather than presenting one as certain.
 
-> **How this serves the public good:** this project uses OSM's own road
-> and facility data to identify which communities in Akure North and
-> Akure South lack practical access to healthcare and education, > across walking, okada, and driving, and, critically, distinguishes
-> genuine service gaps from places where OSM itself simply hasn't
-> caught up yet. That distinction matters: treating an OSM data gap as
-> a confirmed service gap could misdirect real planning attention, so
-> this project surfaces both findings honestly rather than presenting
-> one as certain.
+## Headline findings
+
+Walking is the most restrictive mode in both LGAs, by a wide margin:
+
+| | Akure North | Akure South |
+|---|---|---|
+| Underserved for ≥1 service (walking) | 95.0% of settled cells | 83.2% of settled cells |
+| Underserved for both services (walking) | 59.7% | 60.8% |
+| Avg. health facility travel time (walking) | 80 min (median 47) | 53 min (median 39) |
+| % of cells exceeding the 30-min threshold | 68.1% | 63.7% |
+
+See the live dashboard for the full walk/okada/drive breakdown,
+per-cell travel times, and the ranked list of most-underserved
+settlements in each LGA.
 
 ## What this project does
 
@@ -31,74 +43,60 @@ OSM completeness check, an interactive dashboard, and a narrative StoryMap.
 2. **Flags OSM completeness gaps**, settled areas with no nearby OSM
    health/education facility tags, distinguishing likely data gaps from
    confirmed service gaps.
-3. **Models accessibility**, network-based walking travel time from every
-   settled grid cell to its nearest clinic and nearest school.
+3. **Models accessibility**, network-based travel time from every
+   settled grid cell to its nearest clinic and nearest school, for
+   three modes: walking, okada, and driving.
 4. **Scores underserved areas** using a composite access-deficit index
-   (0–2), ranking the most vulnerable settlements in each LGA, across
-   walking, okada, and driving modes.
-5. **Presents findings** via a Streamlit dashboard (interactive) and an
-   ArcGIS StoryMap (narrative), cross-linked, plus polished standalone
-   **kepler.gl** map exports for visual storytelling in the StoryMap,
-   README, and report.
+   (0–2), ranking the most vulnerable settlements in each LGA.
+5. **Presents findings** three ways: an interactive Streamlit
+   dashboard (the primary output), publication-styled static maps and
+   charts with auto-generated, always-accurate captions (print + web
+   quality, one call per LGA), and standalone kepler.gl HTML exports
+   for visual storytelling.
+
+## Try it
+
+```bash
+pip install -e .
+pip install -e ../lga-osm-extractor   # companion extractor, editable install
+streamlit run dashboard/app.py
+```
 
 ## Repository structure
 
 ```
 akure-accessibility-dashboard/
-├── README.md
+├── README.md                  # this file
 ├── LICENSE
-├── pyproject.toml             # packaging config, enables `pip install -e .`
-├── requirements.txt
-├── requirements-lock.txt      # exact pip-resolved versions, see "Reproducible installs" below
-├── environment.yml
+├── pyproject.toml / requirements.txt / requirements-lock.txt / environment.yml
+├── runtime.txt                 # pins Python 3.11 for Streamlit Cloud (see Setup)
 ├── pytest.ini
+├── .github/workflows/         # test.yml + cross-repo-integration.yml
 │
-├── .github/
-│   └── workflows/
-│       ├── test.yml           # CI: runs offline tests on every push/PR
-│       └── cross-repo-integration.yml  # CI: verifies compatibility with lga-osm-extractor
+├── akure_access/               # the core analysis package, see akure_access/README.md
+│   ├── accessibility/          # network graph, routing, scoring
+│   ├── completeness/            # OSM completeness flagging
+│   ├── insights.py               # data-driven captions, shared by the live dashboard and static exports
+│   └── visualization/             # publication-styled static maps/charts (static_maps.py)
 │
-├── tests/
-│   ├── test_scoring.py         # grid, building density, deficit scoring
-│   ├── test_completeness.py    # OSM completeness flagging (spatial-indexed)
-│   ├── test_network_graph.py   # graph construction, nearest-facility routing (batched)
-│   └── test_cross_repo_integration.py  # verifies lga_extractor output -> akure_access input
+├── notebooks/                  # 01-05, the orchestration layer, see notebooks/README.md
+├── dashboard/app.py             # Streamlit presentation layer
+├── tests/                       # see tests/README.md
 │
-├── data/
-│   └── processed/
-│       ├── akure_north/   (populated by lga_extractor + notebooks)
-│       └── akure_south/
+├── data/processed/{lga}/         # committed: final scored grid + isochrones (see .gitignore)
+├── visuals/                       # generated by notebooks 03 and 05, not all tiers committed:
+│   ├── {lga}/*.jpg                  #   print-quality (300dpi) static maps/charts, notebook 03
+│   ├── {lga}/web/*.jpg               #   web-quality (150dpi) copies of the same figures
+│   ├── {lga}/captions.json            #   insights.py caption text, keyed by filename
+│   └── *.html                           #   standalone kepler.gl interactive maps, notebook 05
+│       (akure_access_static_maps.zip is generated locally by notebook
+│        03 as a download convenience but isn't committed to the repo)
+├── reports/                        # generated by notebook 04 (not yet committed, see open items below):
+│   ├── top_underserved_settlements.csv
+│   ├── mode_comparison_summary.csv
+│   └── lga_comparison_summary.csv
 │
-├── notebooks/
-│   ├── 01_data_extraction.ipynb
-│   ├── 02_completeness_assessment.ipynb
-│   ├── 03_accessibility_analysis.ipynb
-│   ├── 04_results_summary.ipynb
-│   ├── 05_kepler_visualization.ipynb
-│   ├── kepler_config_access_deficit.json
-│   └── kepler_config_mode_comparison.json
-│
-├── visuals/
-│   ├── akure_access_deficit_map.html       (generated by notebook 05)
-│   └── akure_north_mode_comparison_map.html (generated by notebook 05)
-│
-├── akure_access/
-│   ├── accessibility/
-│   │   ├── network_graph.py    # routable walking graph from roads
-│   │   ├── isochrones.py       # isochrone polygons, nearest-facility time
-│   │   └── scoring.py          # grid, building density, access-deficit score
-│   └── completeness/
-│       └── grid_check.py       # OSM completeness flagging per cell
-│
-├── dashboard/
-│   └── app.py                  # Streamlit dashboard
-│
-├── reports/
-│   └── (project_report.docx, top_underserved_settlements.csv)
-│
-└── docs/
-    ├── methodology.md
-    └── storymap_link.md
+└── docs/methodology.md            # full methodology, assumptions, and limitations
 ```
 
 ## Architecture overview
@@ -115,48 +113,68 @@ notebooks/02_completeness_assessment.ipynb → adds grid + OSM completeness flag
         ▼
 notebooks/03_accessibility_analysis.ipynb  → adds per-mode travel times + deficit scores
         │                                    (also precomputes health-facility walking
-        │                                     catchments, isochrones_health_walk.geojson)
+        │                                     catchments, isochrones_health_walk.geojson,
+        │                                     and calls visualization.static_maps
+        │                                     .generate_all_static_outputs() per LGA
+        │                                     → visuals/{lga}/*.jpg + web/ + captions.json
+        │                                     + visuals/akure_access_static_maps.zip)
         ▼
-notebooks/04_results_summary.ipynb         → reports/*.csv (comparison tables)
+notebooks/04_results_summary.ipynb         → cross-mode / cross-LGA comparison tables
+        │                                    → reports/*.csv, data/processed/combined_access_scored.geojson
         ▼
-notebooks/05_kepler_visualization.ipynb    → visuals/*.html (standalone interactive maps)
+notebooks/05_kepler_visualization.ipynb    → visuals/*.html (standalone interactive maps,
+        │                                     Mapbox token stripped before commit)
         │
-        ├──► dashboard/app.py (Streamlit)  ── reads grid_access_scored.geojson directly,
-        │                                      plus isochrones_health_walk.geojson for an
-        │                                      optional "walking catchments" overlay toggle
-        └──► ArcGIS StoryMap (external)     ── embeds the kepler.gl HTML exports
+        └──► dashboard/app.py (Streamlit)  ── reads grid_access_scored.geojson directly,
+                                               plus isochrones_health_walk.geojson for an
+                                               optional "walking catchments" overlay toggle
 ```
 
-**Where the actual logic lives, versus where it's orchestrated:**
-The reusable, tested analysis functions (grid generation, routing,
-scoring, completeness checks) live in `akure_access/`, see
-`akure_access/README.md` for that package's internal architecture. The
-notebooks in `notebooks/` call these functions in sequence against
-real Akure North/South data; `dashboard/app.py` presents the final
-scored output interactively. Neither the notebooks nor the dashboard
-contain core analysis logic themselves, they're orchestration and
-presentation layers on top of the tested package.
+**`akure_access/insights.py` sits alongside this pipeline, not inside
+it**: both `dashboard/app.py` (for the live caption under every map)
+and `visualization/static_maps.py` (for `captions.json`, saved by
+notebook 03) call the same `describe_*()` functions against the same
+scored grid, so the wording a judge sees on the live dashboard and the
+wording baked into a downloaded static figure can never silently
+disagree, and both stay accurate automatically if the underlying
+analysis is re-run with different data.
+
+**Where the actual logic lives, versus where it's orchestrated:** the
+reusable, tested analysis functions (grid generation, routing,
+scoring, completeness checks, caption generation, static map/chart
+rendering) live in `akure_access/`, see `akure_access/README.md` for
+that package's internal architecture. The notebooks call these
+functions in sequence against real Akure North/South data;
+`dashboard/app.py` presents the final scored output interactively.
+Neither the notebooks nor the dashboard contain core analysis logic
+themselves.
+
+**Cross-repo contract:** this repo's `tests/test_cross_repo_integration.py`
+verifies `lga_extractor`'s real output schema matches exactly what
+`akure_access` expects, run in a dedicated CI workflow that checks out
+both repos, not just assumed compatibility.
 
 ## Setup
 
 ```bash
 pip install -e .
-# and, editable-install the companion extractor tool:
 pip install -e ../lga-osm-extractor
 ```
 
-This installs the `akure_access` package (accessibility + completeness modules) in
-editable mode, so `from akure_access.accessibility import ...` works regardless of
-your current working directory.
+Optional extras: `pip install -e ".[viz]"` (kepler.gl for notebook 05),
+`".[static-maps]"` (matplotlib + contextily, for notebook 03's static
+map/chart generation), `".[app]"` (Streamlit + leafmap),
+`".[notebooks]"` (Jupyter), `".[all]"`.
 
-Optional extras:
-
-```bash
-pip install -e ".[viz]"        # adds keplergl (for notebook 05)
-pip install -e ".[app]"        # adds streamlit + leafmap (for the dashboard)
-pip install -e ".[notebooks]"  # adds jupyter
-pip install -e ".[all]"        # everything above
-```
+The live dashboard is deployed on Streamlit Community Cloud with an
+exact pinned dependency set (`dashboard/requirements.txt`, matching
+`requirements-lock.txt`) and a pinned Python version (`runtime.txt`,
+`python-3.11`), deliberately: an earlier deploy silently resolved a
+different, untested `mapclassify` version because it was unpinned
+everywhere (including missing from `pyproject.toml`'s extras), which
+broke the deployed map's color legend without changing a single line
+of this project's own code. See `AI_DISCLOSURE.md` for the full
+diagnosis.
 
 ## Verifying the install
 
@@ -164,11 +182,10 @@ pip install -e ".[all]"        # everything above
 pytest tests/ -m "not integration" -v
 ```
 
-Runs the offline unit test suite, grid generation, building-density
-joins, OSM completeness flagging, and multi-modal (walk/okada/drive)
-access-deficit scoring, without requiring network access. The same
-command runs automatically on every push via GitHub Actions; see the
-badge at the top of this README.
+Runs the offline unit test suite (grid generation, building-density
+joins, OSM completeness flagging, multi-modal access-deficit scoring,
+caption generation, and static map/chart rendering) without network
+access. Same command CI runs on every push.
 
 ## Running the analysis
 
@@ -179,56 +196,131 @@ dashboard:
 streamlit run dashboard/app.py
 ```
 
-Optionally, run `05_kepler_visualization.ipynb` to generate polished,
-standalone kepler.gl map exports (`visuals/*.html`) for embedding in the
-ArcGIS StoryMap or README. **Kepler.gl is used purely for static/visual
-storytelling**, it is a separate, non-interactive supplementary output;
-the Streamlit dashboard remains the primary interactive analysis tool
-for the submission.
+Notebook 03 automatically generates the full set of publication-styled
+static maps/charts and captions for each LGA as part of its normal
+run, no separate step needed, see `visuals/{lga}/`. Notebook 05 is
+optional on top of that: it produces 3 additional standalone kepler.gl
+HTML maps (`visuals/*.html`) for visual storytelling, useful for a
+written report or README, but not required for the dashboard or the
+static maps to work. The Streamlit dashboard remains the project's
+primary interactive output either way.
 
-## Methodology summary
+## Methodology, assumptions, and limitations
+
+Full detail: **[`docs/methodology.md`](docs/methodology.md)**. In short:
 
 - **Population proxy:** OSM building density per 500m grid cell (no
   fine-grained population data available for these LGAs).
-- **Network model:** walking-speed-weighted graph built via OSMnx
-  (`network_type="walk"`), travel time in minutes per edge.
-- **Access threshold:** cells more than 30 minutes' walk from the nearest
-  facility are flagged as underserved for that service.
-- **Completeness check:** cells with visible building density but no OSM
-  facility tag within 1 km are flagged as possible OSM data gaps, not
+- **Network model:** mode-specific weighted graphs built via OSMnx
+  (walk/drive), okada shares the drive network at a different assumed
+  speed (OSM has no distinct motorcycle network type).
+- **Access threshold:** cells more than 30 minutes from the nearest
+  facility (by that mode) are flagged as underserved for that service.
+- **Completeness check:** cells with visible building density but no
+  OSM facility tag nearby are flagged as *possible* OSM data gaps, not
   confirmed service gaps, this caveat is carried through to the
-  dashboard and StoryMap narrative.
-
-Full methodology detail: see `docs/methodology.md` and the standalone
-project methodology document produced alongside this repository.
-
-## Part of
-
-**Map<>kathon 2026**, in partnership with Unpatterned and the
-OpenStreetMap Engineering Working Group. https://www.useosm.org/
-
-## Documentation overhaul (Phase 1)
-
-As part of a repository-wide readability/maintainability pass, this
-repo received:
-- A previously-empty `akure_access/__init__.py` filled in with a real
-  package docstring and top-level exports
-- New folder-level READMEs: `notebooks/README.md`, `tests/README.md`,
-  `akure_access/README.md` (package architecture)
-- The "Architecture overview" section above, showing the full
-  extractor → notebooks → dashboard/StoryMap data flow
-- Existing module/function docstrings (added across earlier sessions:
-  OSMnx 2.x compatibility fix, multi-source Dijkstra refactor, spatial-
-  index completeness rewrite) were audited and confirmed complete, no file was found missing a module-level docstring except the empty
-  `__init__.py` noted above
-
-A full tutorial-style rebuild of `notebooks/01-05` (guided
-Markdown walkthroughs with explicit sections for imports, config, data
-loading, processing, visualization, export, and summary) is a
-substantially larger undertaking and is tracked separately rather than
-folded into this pass, given proximity to the Aug 7 submission
-deadline.
+  dashboard.
 
 ## License
 
 Code: see `LICENSE`. OSM data: © OpenStreetMap contributors, ODbL.
+
+## Part of
+
+**Map<>kathon 2026**, in partnership with Unpatterned and the
+OpenStreetMap Engineering Working Group.
+
+- UseOSM: https://www.useosm.org/en/
+- Map<>kathon 2026 event page: https://www.useosm.org/en/community-events/mapkaton-2026
+- Sibling submission: [Nigerian LGA OSM Extractor](https://github.com/Mapkathon2026-UseOSM/lga-osm-extractor) — https://lga-extractor.streamlit.app/
+--
+
+## AI Disclosure
+
+Following Map<>kathon 2026's Responsible AI principles: state what tool
+was used, explain its role, confirm outputs were reviewed, confirm no
+blind write-back to OSM, confirm local knowledge/community guidelines
+were respected, and acknowledge limitations/risks/uncertainty.
+
+### Tool used
+
+**Claude (Anthropic)** was used as a coding assistant throughout the
+development of `akure-accessibility-dashboard`, across multiple
+sessions.
+
+### Role AI played
+
+Claude assisted with the following, mapped to the actual modules in
+this repository:
+
+- **Health/education facility geometry bug** — diagnosing that OSM
+  tags a facility either as a single node or as a full building
+  outline (Polygon/MultiPolygon), and that the latter silently fails
+  to snap to this project's routing graph. The actual fix (collapsing
+  outline geometries to their centroid, in the sibling
+  `lga-osm-extractor` repo's `clean.py`) lives upstream, but its
+  effect was diagnosed here: Akure North's 14 health facilities were
+  all mapped as building outlines in OSM, which made health access
+  look catastrophically worse than reality until traced back to this
+  root cause.
+- **Network graph construction and scoring** —
+  `akure_access/accessibility/network_graph.py` (mode-specific
+  routable graphs, walk/okada/drive) and `scoring.py` (`build_grid()`,
+  `add_building_density()` as a population proxy,
+  `add_access_times()`, `add_access_deficit_score()`, and
+  `sanitize_for_export()`, which converts internal `inf` sentinel
+  values for unreachable cells to `NaN` for clean GeoJSON export, and
+  must run after scoring completes, an ordering locked in by
+  regression tests).
+- **OSM completeness checking** —
+  `akure_access/completeness/grid_check.py`'s `flag_completeness()`,
+  including the rewrite from a linear per-cell distance scan to a
+  spatial-indexed `geopandas.sjoin_nearest()` approach (STRtree,
+  O(n log m) instead of O(n × m)), with an equivalence test
+  (`test_spatial_index_flagging_matches_naive_linear_scan`) confirming
+  the rewrite produces identical results to the original.
+- **Streamlit dashboard design and cartography** —
+  `dashboard/app.py`'s custom design system (color palette, layout,
+  typography), the colorblind-safe palette option (`DEFICIT_COLORS`,
+  `CONTINUOUS_CMAP`, Okabe-Ito-based), and the map-rendering logic in
+  `render_map()` (combined categorical deficit-score view vs.
+  continuous per-mode travel-time views).
+
+Claude did **not** generate or validate the underlying accessibility
+analysis itself (facility locations, isochrone geometry, network
+routing results). All accessibility outputs are derived from
+OSM-sourced data and standard routing/analysis libraries (OSMnx,
+NetworkX, GeoPandas), reviewed by the author.
+
+### Limitations, risks, and uncertainty
+
+- Accessibility results are sensitive to OSM road network
+  completeness, which may under-represent informal or unmapped roads
+  in parts of Akure.
+- Isochrone calculations assume routing network accuracy and standard
+  travel speeds (walking 5 km/h, okada 25 km/h, driving 35 km/h), which
+  may not reflect real-world conditions (seasonal road conditions,
+  traffic, or okada-specific behavior like weaving through traffic or
+  using informal shortcuts not represented in OSM's road network).
+- The Polygon→Point centroid fix improves geometric accuracy, but
+  centroids may still misrepresent very large or irregularly shaped
+  facility polygons.
+- OSM data density differs between Akure North and Akure South, which
+  may bias comparative accessibility results between the two LGAs.
+- "Underserved" findings may partly reflect OSM under-mapping rather
+  than confirmed lack of physical service access; see the completeness
+  flag columns for cells where this ambiguity applies, and
+  `docs/methodology.md` for the full assumptions/limitations list.
+- Cloud deployment behavior is a genuine, demonstrated source of risk
+  independent of code correctness: this project's own Streamlit Cloud
+  deployment broke, and later appeared visually broken a second time,
+  due to unpinned transitive dependencies and, separately, a
+  browser-side extension entirely outside the project's control. Both
+  are documented above as a caution against assuming a visual bug is
+  necessarily a data or logic bug.
+- As with any AI-assisted code, library/API usage suggested by Claude
+  was verified against current documentation, given possible lag in
+  AI training data, most concretely for `leafmap`/`mapclassify`'s
+  choropleth classification API and `geopandas.sjoin_nearest()`'s
+  spatial-indexing behavior.
+
